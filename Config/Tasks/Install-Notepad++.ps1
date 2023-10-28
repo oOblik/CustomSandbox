@@ -20,7 +20,7 @@ switch($Action.ToLower()) {
 
         Invoke-WebRequest -Uri $DownloadURL -OutFile $OutPath
 
-        $ThemeDownloadURL = "https://raw.githubusercontent.com/Nidre/VS2015-Dark-Npp/master/VS2015-Dark.xml"
+        $ThemeDownloadURL = "https://raw.githubusercontent.com/hellon8/VS2019-Dark-Npp/master/VS2019-Dark.xml"
         Invoke-WebRequest -Uri $ThemeDownloadURL -OutFile $ThemeOutPath
 
         break;
@@ -37,7 +37,7 @@ switch($Action.ToLower()) {
                 New-Item -Path $ThemePath -ItemType Directory -Force | Out-Null
             }
 
-            $ThemeFullPath = Join-Path $ThemePath "VS2015-Dark.xml"
+            $ThemeFullPath = Join-Path $ThemePath "VS2019-Dark.xml"
             $LocalConfigFullPath = Join-Path $LocalConfigPath "config.xml"
 
             Copy-Item $ThemeOutPath -Destination $ThemeFullPath | Out-Null

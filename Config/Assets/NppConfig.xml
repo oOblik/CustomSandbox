@@ -42,7 +42,7 @@
         <GUIConfig name="ScintillaGlobalSettings" enableMultiSelection="no" />
         <GUIConfig name="openSaveDir" value="0" defaultDirPath="" />
         <GUIConfig name="titleBar" short="no" />
-        <GUIConfig name="stylerTheme" path="C:\Users\WDAGUtilityAccount\AppData\Roaming\Notepad++\themes\VS2015-Dark.xml" />
+        <GUIConfig name="stylerTheme" path="C:\Users\WDAGUtilityAccount\AppData\Roaming\Notepad++\themes\VS2019-Dark.xml" />
         <GUIConfig name="insertDateTime" customizedFormat="yyyy-MM-dd HH:mm:ss" reverseDefaultOrder="no" />
         <GUIConfig name="wordCharList" useDefault="yes" charsAdded="" />
         <GUIConfig name="delimiterSelection" leftmostDelimiter="40" rightmostDelimiter="41" delimiterSelectionOnEntireDocument="no" />
