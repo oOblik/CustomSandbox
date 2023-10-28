@@ -19,9 +19,14 @@ switch($Action.ToLower()) {
             $HTML = $WebResponse.Content
         
             $comHTML = New-Object -Com "HTMLFile"
-            $comHTML.IHTMLDocument2_write($HTML)
+
+            try {
+                $comHTML.IHTMLDocument2_write($HTML)
+            } catch {
+                $comHTML.write([System.Text.Encoding]::Unicode.GetBytes($HTML))
+            }
         
-            $DownloadPath = ($comHtml.all.tags('a') | Where-Object {$_.textContent -like '*IDA Freeware for Windows*'} | Select-Object -First 1).href
+            $DownloadPath = ($comHtml.all.tags('a') | Where-Object {$_.textContent -like '*IDA Free for Windows*'} | Select-Object -First 1).href
         }
         
         Invoke-WebRequest -Uri $DownloadPath -OutFile $OutPath
