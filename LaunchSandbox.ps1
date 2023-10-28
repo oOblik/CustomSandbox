@@ -1,4 +1,4 @@
-$ErrorActionPreference = 'SilentlyContinue'
+$ErrorActionPreference = 'Continue'
 $ProgressPreference = 'SilentlyContinue'
 
 . "./Config/Helpers.ps1"
@@ -28,6 +28,13 @@ $InConfig = @"
 if(!(Test-Path "$PSScriptRoot\Config\Cache")) {
     New-Item -Path "$PSScriptRoot\Config\Cache" -ItemType Directory -Force | Out-Null
 }
+
+if(!(Test-Path "$PSScriptRoot\Config\Utilities")) {
+    New-Item -Path "$PSScriptRoot\Config\Utilities" -ItemType Directory -Force | Out-Null
+}
+
+Write-Host "If you want access to any files/utilities inside the sandbox, add them to '$PSScriptRoot\Config\Utilities' now." -ForegroundColor Green
+Write-Host -ForegroundColor White
 
 $EnableProtectedMode = Read-Host -Prompt "Enable Protected Mode? [y/N]"
 $AllowNetworking = Read-Host -Prompt "Allow Networking? [y/N]"
