@@ -9,6 +9,7 @@ Start-Transcript -Path "C:\Windows\Temp\SandboxConfig.txt"
 Write-Host 'Setting Initial Wallpaper...'
 Update-WallPaper -Path "C:\Config\Assets\Wait.jpg"
 Hide-Taskbar
+Hide-Icons
 Get-Process explorer | Stop-Process -Force
 
 Write-Host 'Setting Dark Mode...'
@@ -38,7 +39,7 @@ Set-MinimalTaskbar
 Write-Host 'Setting Final Wallpaper...'
 Update-WallPaper -Path "C:\Config\Wallpaper.jpg"
 Show-Taskbar
-
+Show-Icons
 & "C:\Config\Tasks\Set-BGInfo.ps1" -Action execute
 
 Write-Host 'Resetting Explorer...'
