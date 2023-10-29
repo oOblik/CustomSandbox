@@ -1,99 +1,5 @@
 $CSMountPath = "$Env:SYSTEMDRIVE\Config"
 
-function DrawMenu {
-    param ($menuItems, $menuPosition, $Multiselect, $selection)
-    $l = $menuItems.length
-    for ($i = 0; $i -le $l;$i++) {
-		if ($menuItems[$i] -ne $null){
-			$item = $menuItems[$i]
-			if ($Multiselect)
-			{
-				if ($selection -contains $i){
-					$item = '[x] ' + $item
-				}
-				else {
-					$item = '[ ] ' + $item
-				}
-			}
-			if ($i -eq $menuPosition) {
-				Write-Host "> $($item)" -ForegroundColor Green
-			} else {
-				Write-Host "  $($item)"
-			}
-		}
-    }
-}
-
-function Toggle-Selection {
-	param ($pos, [array]$selection)
-	if ($selection -contains $pos){ 
-		$result = $selection | where {$_ -ne $pos}
-	}
-	else {
-		$selection += $pos
-		$result = $selection
-	}
-	$result
-}
-
-function Menu {
-    param ([array]$menuItems, [switch]$ReturnIndex=$false, [switch]$Multiselect)
-    $vkeycode = 0
-    $pos = 0
-    $selection = @()
-    if ($menuItems.Length -gt 0)
-	{
-		try {
-			[console]::CursorVisible=$false #prevents cursor flickering
-			DrawMenu $menuItems $pos $Multiselect $selection
-			While ($vkeycode -ne 13 -and $vkeycode -ne 27) {
-				$press = $host.ui.rawui.readkey("NoEcho,IncludeKeyDown")
-				$vkeycode = $press.virtualkeycode
-				If ($vkeycode -eq 38 -or $press.Character -eq 'k') {$pos--}
-				If ($vkeycode -eq 40 -or $press.Character -eq 'j') {$pos++}
-				If ($vkeycode -eq 36) { $pos = 0 }
-				If ($vkeycode -eq 35) { $pos = $menuItems.length - 1 }
-				If ($press.Character -eq ' ') { $selection = Toggle-Selection $pos $selection }
-				if ($pos -lt 0) {$pos = 0}
-				If ($vkeycode -eq 27) {$pos = $null }
-				if ($pos -ge $menuItems.length) {$pos = $menuItems.length -1}
-				if ($vkeycode -ne 27)
-				{
-					$startPos = [System.Console]::CursorTop - $menuItems.Length
-					[System.Console]::SetCursorPosition(0, $startPos)
-					DrawMenu $menuItems $pos $Multiselect $selection
-				}
-			}
-		}
-		finally {
-			[System.Console]::SetCursorPosition(0, $startPos + $menuItems.Length)
-			[console]::CursorVisible = $true
-		}
-	}
-	else {
-		$pos = $null
-	}
-
-    if ($ReturnIndex -eq $false -and $pos -ne $null)
-	{
-		if ($Multiselect){
-			return $menuItems[$selection]
-		}
-		else {
-			return $menuItems[$pos]
-		}
-	}
-	else 
-	{
-		if ($Multiselect){
-			return $selection
-		}
-		else {
-			return $pos
-		}
-	}
-}
-
 function Update-Wallpaper {
 [cmdletbinding(SupportsShouldProcess)]
     Param(
@@ -193,33 +99,27 @@ function Restart-Explorer {
 
 function Show-Notification {
     [cmdletbinding()]
-    Param (
-        [string]
-		$Title = "CustomSandbox",
-        [string]
-		$Tag = "CustomSandbox",
-        [string]
-		$Group = "CustomSandbox",
-        [string]
-        [parameter(ValueFromPipeline)]
-        $Text
+    param (
+		[string]$Title = "CustomSandbox",
+        [string][parameter(ValueFromPipeline)]$Text
     )
 
-    [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] > $null
-    $Template = [Windows.UI.Notifications.ToastNotificationManager]::GetTemplateContent([Windows.UI.Notifications.ToastTemplateType]::ToastText02)
+$TemplateXML = @"
+<toast>
+	<visual>
+		<binding template="ToastGeneric">
+			<text id="title"></text>
+			<text id="text"></text>
+		</binding>
+	</visual>
+</toast>
+"@
 
-    $RawXml = [xml] $Template.GetXml()
-    ($RawXml.toast.visual.binding.text | Where-Object {$_.id -eq "1"}).AppendChild($RawXml.CreateTextNode($ToastTitle)) > $null
-    ($RawXml.toast.visual.binding.text | Where-Object {$_.id -eq "2"}).AppendChild($RawXml.CreateTextNode($ToastText)) > $null
+	$TemplateContent = [Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime]::New()
+	$TemplateContent.loadXml($TemplateXML)
+	$TemplateContent.SelectSingleNode('//text[@id="title"]').InnerText = $Title
+	$TemplateContent.SelectSingleNode('//text[@id="text"]').InnerText = $Text
+	$AppId = '{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}\WindowsPowerShell\v1.0\powershell.exe'
 
-    $SerializedXml = New-Object Windows.Data.Xml.Dom.XmlDocument
-    $SerializedXml.LoadXml($RawXml.OuterXml)
-
-    $Toast = [Windows.UI.Notifications.ToastNotification]::New($SerializedXml)
-    $Toast.Tag = $Tag
-    $Toast.Group = $Group
-    $Toast.ExpirationTime = [DateTimeOffset]::Now.AddMinutes(1)
-
-    $Notifier = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier("CustomSandbox")
-    $Notifier.Show($Toast);
+	return [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime]::CreateToastNotifier($AppId).Show($TemplateContent)
 }
