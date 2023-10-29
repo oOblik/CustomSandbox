@@ -73,7 +73,7 @@ for ($Task = 0; $Task -le $TaskOptions.Count; $Task++) {
 
 
 Write-Host 'Adding Utilities Shortcut...'
-Create-Shortcut -Path "$Env:USERPROFILE\Desktop\Utilities.lnk" -TargetPath "$CSMountPath\Utilities"
+New-Shortcut -Path "$Env:USERPROFILE\Desktop\Utilities.lnk" -TargetPath "$CSMountPath\Utilities"
 
 #Configure the Taskbar and Hide Icons
 Write-Host 'Setting Taskbar...'

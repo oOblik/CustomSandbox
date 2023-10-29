@@ -81,7 +81,7 @@ function Set-MinimalTaskbar {
     Set-ItemProperty 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer' -Name 'HideSCANetwork' -Value 1 -Force
 }
 
-function Create-Shortcut {
+function New-Shortcut {
 	param(
 		[string]$Path,
 		[string]$TargetPath
