@@ -22,6 +22,7 @@ switch($Action.ToLower()) {
         if(Test-Path $OutPath) {
             Copy-Item $OutPath -Destination $RunPath | Out-Null
             Start-Process -FilePath "Msiexec.exe" -ArgumentList "/I `"$RunPath`" /quiet /norestart" -WindowStyle Hidden -Wait
+            Remove-Item -Path "$Env:PUBLIC\Desktop\Google Chrome.lnk" -Force | Out-Null
         } else {
             Write-Host "Installer not found for task $($MyInvocation.MyCommand.Name)"
         }

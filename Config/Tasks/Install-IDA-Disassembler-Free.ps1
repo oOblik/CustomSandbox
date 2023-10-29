@@ -36,6 +36,7 @@ switch($Action.ToLower()) {
     "execute" {
         if(Test-Path $OutPath) {
             Start-Process -FilePath "$OutPath" -ArgumentList "--unattendedmodeui minimal --mode unattended --installpassword freeware" -WindowStyle Hidden -Wait
+            Remove-Item -Path "$Env:PUBLIC\Desktop\IDA Free*.lnk" -Force | Out-Null
         } else {
             Write-Host "Installer not found for task $($MyInvocation.MyCommand.Name)"
         }

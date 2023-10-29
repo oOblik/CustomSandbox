@@ -62,6 +62,7 @@ switch($Action.ToLower()) {
             Copy-Item $OutPath -Destination $RunPath | Out-Null
             Set-Content -Path $ConfigPath -Value $SilentConfigFile -Force
             Start-Process -FilePath $RunPath -ArgumentList "/s /f1`"$ConfigPath`"" -WindowStyle Hidden -Wait
+            Remove-Item -Path "$Env:PUBLIC\Desktop\ManageEngine*.lnk" -Force | Out-Null
         } else {
             Write-Host "Installer not found for task $($MyInvocation.MyCommand.Name)"
         }
