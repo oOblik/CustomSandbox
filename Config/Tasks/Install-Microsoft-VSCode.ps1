@@ -20,7 +20,7 @@ switch($Action.ToLower()) {
     "execute" {
         if(Test-Path $OutPath) {
 
-            Start-Process -FilePath $OutPath -ArgumentList "/verysilent /suppressmsgboxes /mergetasks=`"!runCode`"" -Wait     
+            Start-Process -FilePath $OutPath -ArgumentList "/verysilent /suppressmsgboxes /mergetasks=`"!runCode`"" -WindowStyle Hidden -Wait     
 
         } else {
             Write-Host "Installer not found for task $($MyInvocation.MyCommand.Name)"

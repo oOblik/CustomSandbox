@@ -35,7 +35,7 @@ switch($Action.ToLower()) {
 
     "execute" {
         if(Test-Path $OutPath) {
-            Start-Process -FilePath "$OutPath" -ArgumentList "--unattendedmodeui minimal --mode unattended --installpassword freeware" -Wait -WindowStyle Hidden
+            Start-Process -FilePath "$OutPath" -ArgumentList "--unattendedmodeui minimal --mode unattended --installpassword freeware" -WindowStyle Hidden -Wait
         } else {
             Write-Host "Installer not found for task $($MyInvocation.MyCommand.Name)"
         }

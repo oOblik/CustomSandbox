@@ -40,7 +40,7 @@ switch($Action.ToLower()) {
                 Write-Host "Windows Terminal requires at least Windows 10 version 1903/OS build 18362.x."
             } else {
                 Write-Host "Installing Microsoft Visual C++ Redistributable for Visual Studio 2015-2022..."
-                Start-Process -FilePath $VCRedistOutPath -ArgumentList "/quiet /norestart" -Wait
+                Start-Process -FilePath $VCRedistOutPath -ArgumentList "/quiet /norestart" -WindowStyle Hidden -Wait
 
                 if (!(Get-AppxPackage -Name 'Microsoft.UI.Xaml.2.8.5')) {
                     Write-Host "Installing Microsoft.UI.Xaml.2.8.5..."

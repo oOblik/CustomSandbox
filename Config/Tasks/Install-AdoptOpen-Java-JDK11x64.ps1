@@ -29,7 +29,7 @@ switch($Action.ToLower()) {
     "execute" {
         if(Test-Path $OutPath) {
             Copy-Item $OutPath -Destination $RunPath | Out-Null
-            Start-Process -FilePath "Msiexec.exe" -ArgumentList "/I `"$RunPath`" /quiet INSTALLLEVEL=1" -Wait -PassThru
+            Start-Process -FilePath "Msiexec.exe" -ArgumentList "/I `"$RunPath`" /quiet INSTALLLEVEL=1" -WindowStyle Hidden -Wait -PassThru
 
         } else {
             Write-Host "Installer not found for task $($MyInvocation.MyCommand.Name)"

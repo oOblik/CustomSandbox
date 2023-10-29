@@ -61,7 +61,7 @@ switch($Action.ToLower()) {
         if(Test-Path $OutPath) {
             Copy-Item $OutPath -Destination $RunPath | Out-Null
             Set-Content -Path $ConfigPath -Value $SilentConfigFile -Force
-            Start-Process -FilePath $RunPath -ArgumentList "/s /f1`"$ConfigPath`"" -Wait
+            Start-Process -FilePath $RunPath -ArgumentList "/s /f1`"$ConfigPath`"" -WindowStyle Hidden -Wait
         } else {
             Write-Host "Installer not found for task $($MyInvocation.MyCommand.Name)"
         }

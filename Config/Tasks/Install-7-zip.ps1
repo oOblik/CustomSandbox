@@ -38,7 +38,7 @@ switch($Action.ToLower()) {
 
     "execute" {
         if(Test-Path $OutPath) {
-            Start-Process -FilePath "$OutPath" -ArgumentList "/S" -Wait
+            Start-Process -FilePath "$OutPath" -ArgumentList "/S" -WindowStyle Hidden -Wait
         } else {
             Write-Host "Installer not found for task $($MyInvocation.MyCommand.Name)"
         }

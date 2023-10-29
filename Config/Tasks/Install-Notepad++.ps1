@@ -28,7 +28,7 @@ switch($Action.ToLower()) {
 
     "execute" {
         if(Test-Path $OutPath) {
-            Start-Process -FilePath $OutPath -ArgumentList "/S" -Wait
+            Start-Process -FilePath $OutPath -ArgumentList "/S" -WindowStyle Hidden -Wait
 
             $LocalConfigPath = Join-Path $env:APPDATA "Notepad++"
             $ThemePath = Join-Path $LocalConfigPath "themes"

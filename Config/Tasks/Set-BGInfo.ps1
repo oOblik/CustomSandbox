@@ -24,7 +24,7 @@ switch($Action.ToLower()) {
 
     "execute" {
         if(Test-Path $OutPath) {
-            Start-Process -FilePath "C:\Config\Cache\Bginfo64.exe" -ArgumentList "C:\Config\Assets\BGInfo.bgi /timer:0 /nolicprompt /silent"
+            Start-Process -FilePath "C:\Config\Cache\Bginfo64.exe" -ArgumentList "C:\Config\Assets\BGInfo.bgi /timer:0 /nolicprompt /silent" -WindowStyle Hidden
         } else {
             Write-Host "Utility not found for task $($MyInvocation.MyCommand.Name)"
         }
