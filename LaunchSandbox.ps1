@@ -1,9 +1,10 @@
 $ErrorActionPreference = 'Continue'
 $ProgressPreference = 'SilentlyContinue'
 
-. "./Config/Helpers.ps1"
-
 Start-Transcript -Path "C:\Windows\Temp\CustomSandbox.txt"
+
+Import-Module ".\Modules\InteractiveMenu\InteractiveMenu.psd1"
+. ".\Config\Helpers.ps1"
 
 $InConfig = @"
 <Configuration>
@@ -17,7 +18,7 @@ $InConfig = @"
             <ReadOnly>true</ReadOnly>
         </MappedFolder>
     </MappedFolders>
-    <ClipboardRedirection>true</ClipboardRedirection>
+    <ClipboardRedirection>false</ClipboardRedirection>
     <MemoryInMB>4096</MemoryInMB>
     <LogonCommand>
      <Command>C:\Config\sandbox-setup.cmd</Command>
@@ -25,23 +26,59 @@ $InConfig = @"
 </Configuration>
 "@
 
-if(!(Test-Path "$PSScriptRoot\Config\Cache")) {
-    New-Item -Path "$PSScriptRoot\Config\Cache" -ItemType Directory -Force | Out-Null
+$CachePath = "$PSScriptRoot\Config\Cache"
+
+if(!(Test-Path $CachePath)) {
+    New-Item -Path $CachePath -ItemType Directory -Force | Out-Null
 }
 
-if(!(Test-Path "$PSScriptRoot\Config\Utilities")) {
-    New-Item -Path "$PSScriptRoot\Config\Utilities" -ItemType Directory -Force | Out-Null
+$UtilPath = "$PSScriptRoot\Config\Utilities"
+if(!(Test-Path $UtilPath)) {
+    New-Item -Path $UtilPath -ItemType Directory -Force | Out-Null
 }
 
-Write-Host "If you want access to any files/utilities inside the sandbox, add them to '$PSScriptRoot\Config\Utilities' now." -ForegroundColor Green
-Write-Host -ForegroundColor White
+$MenuHeader = @"
+CustomSandbox
+If you want access to any utilities/files inside the sandbox, add them to the following directory:
+$UtilPath
 
-$EnableProtectedMode = Read-Host -Prompt "Enable Protected Mode? [y/N]"
-$AllowNetworking = Read-Host -Prompt "Allow Networking? [y/N]"
-$AllowVGPU = Read-Host -Prompt "Allow vGPU? [y/N]"
-$AskForceUpdates = Read-Host -Prompt "Update cached installers? [y/N]"
+Choose your options:
+"@
 
-if ( $AskForceUpdates -match "[yY]" ) { 
+$MenuItems = @(
+    Get-InteractiveMultiMenuOption `
+        -Item "ProtectedMode" `
+        -Label "Protected Mode" `
+        -Order 0 `
+        -Info "If enabled Windows sandbox will be launched in Protected Mode."
+    Get-InteractiveMultiMenuOption `
+        -Item "Networking" `
+        -Label "Networking" `
+        -Order 1 `
+        -Info "Enable networking." `
+        -Selected
+    Get-InteractiveMultiMenuOption `
+        -Item "vGPU" `
+        -Label "vGPU" `
+        -Order 2 `
+        -Info "Enable vGPU." `
+        -Selected
+    Get-InteractiveMultiMenuOption `
+        -Item "Clipboard" `
+        -Label "Allow Clipboard" `
+        -Order 3 `
+        -Info "If enabled clipboard access in the sandbox will be allowed." `
+        -Selected
+    Get-InteractiveMultiMenuOption `
+        -Item "UpdateCache" `
+        -Label "Update Cached Installers" `
+        -Order 4 `
+        -Info "If enabled all selected applications will be re-downloaded/updated."
+)
+
+$SelectedOptions = Get-InteractiveMenuUserSelection -Header $MenuHeader -Items $MenuItems
+
+if ($SelectedOptions -contains 'UpdateCache') { 
     $ForceUpdates = $True
 } else {
     $ForceUpdates = $False
@@ -67,7 +104,7 @@ Write-Host "Running Update action for task Set-BGInfo..."
 & "$PSScriptRoot\Config\Tasks\Set-BGInfo.ps1" -Action Update -ForceUpdate $ForceUpdates
 
 Write-Host "Writing Task Configuration..."
-$EnabledTasks | Export-CSV -Path "$PSScriptRoot\Config\Cache\EnabledTasks.csv" -NoTypeInformation -Force
+$EnabledTasks | Export-CSV -Path "$CachePath\EnabledTasks.csv" -NoTypeInformation -Force
 
 Write-Host "Getting Sandbox Configuration..."
 $OutConfig = Join-Path $env:TEMP "CustomSandbox.wsb"
@@ -75,16 +112,20 @@ $OutConfig = Join-Path $env:TEMP "CustomSandbox.wsb"
 $XML = [XML]$InConfig
 $XML.Configuration.MappedFolders.MappedFolder.HostFolder = [string](Join-Path $PSScriptRoot "Config")
 
-if ( $EnableProtectedMode -match "[yY]" ) { 
+if ($SelectedOptions -contains 'ProtectedMode') { 
     $XML.Configuration.ProtectedClient = "Enable"
 }
 
-if ( $AllowNetworking -match "[yY]" ) { 
+if ($SelectedOptions -contains 'Networking') { 
      $XML.Configuration.Networking = "Enable"
 }
 
-if ( $AllowVGPU -match "[yY]" ) { 
+if ($SelectedOptions -contains 'vGPU') { 
      $XML.Configuration.VGpu = "Enable"
+}
+
+if ($SelectedOptions -contains 'Clipboard') { 
+    $XML.Configuration.ClipboardRedirection = "true"
 }
 
 Write-Host "Writing Sandbox Configuration..."
