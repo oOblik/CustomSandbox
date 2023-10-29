@@ -26,6 +26,8 @@ $InConfig = @"
 </Configuration>
 "@
 
+$XML = [XML]$InConfig
+
 $CachePath = "$PSScriptRoot\Config\Cache"
 
 if(!(Test-Path $CachePath)) {
@@ -74,9 +76,32 @@ $MenuItems = @(
         -Label "Update Cached Installers" `
         -Order 4 `
         -Info "If enabled all selected applications will be re-downloaded/updated."
+    Get-InteractiveMultiMenuOption `
+        -Item "CustomRam" `
+        -Label "Set RAM amount" `
+        -Order 5 `
+        -Info "If enabled you will be prompted to set a value for the amount of RAM allocated for the sandbox."
 )
 
 $SelectedOptions = Get-InteractiveMenuUserSelection -Header $MenuHeader -Items $MenuItems
+
+if ($SelectedOptions -contains 'CustomRam') {
+
+    $RAMHeader = "Set RAM to allocate to sandbox in MB:"
+
+    $MaxFreeRam = [Math]::Round((Get-CIMInstance Win32_OperatingSystem | Select-Object FreePhysicalMemory).FreePhysicalMemory / 1024)
+
+    $RAMItems = @()
+    for($RamVal = 1024; $RamVal -le $MaxFreeRam; $RamVal += 1024) {
+        $RAMItems += Get-InteractiveChooseMenuOption -Label "$RamVal" -Value "$RamVal" -Info "$RamVal"
+    }
+
+    $CustomRam = Get-InteractiveMenuChooseUserSelection -Question $RAMHeader -Answers $RAMItems
+
+    $XML.Configuration.MemoryInMB = $CustomRam
+
+}
+
 
 if ($SelectedOptions -contains 'UpdateCache') { 
     $ForceUpdates = $True
@@ -84,7 +109,7 @@ if ($SelectedOptions -contains 'UpdateCache') {
     $ForceUpdates = $False
 }
 
-$TaskOptions = Get-ChildItem -Path "$PSScriptRoot\Config\Tasks\*.ps1" -Exclude "Set-*.ps1" | Select-Object BaseName, FullName | Out-GridView -OutputMode Multiple -Title '[Ctrl + Click] to choose tasks to run:'
+$TaskOptions = Get-ChildItem -Path "$PSScriptRoot\Config\Tasks\*.ps1" | Select-Object BaseName, FullName | Out-GridView -OutputMode Multiple -Title '[Ctrl + Click] to choose tasks to run:'
 
 $EnabledTasks = @()
 
@@ -100,16 +125,12 @@ ForEach ($Task in $TaskOptions) {
     & "$($Task.FullName)" -Action Update -ForceUpdate $ForceUpdates
 }
 
-Write-Host "Running Update action for task Set-BGInfo..."
-& "$PSScriptRoot\Config\Tasks\Set-BGInfo.ps1" -Action Update -ForceUpdate $ForceUpdates
-
 Write-Host "Writing Task Configuration..."
 $EnabledTasks | Export-CSV -Path "$CachePath\EnabledTasks.csv" -NoTypeInformation -Force
 
 Write-Host "Getting Sandbox Configuration..."
 $OutConfig = Join-Path $env:TEMP "CustomSandbox.wsb"
 
-$XML = [XML]$InConfig
 $XML.Configuration.MappedFolders.MappedFolder.HostFolder = [string](Join-Path $PSScriptRoot "Config")
 
 if ($SelectedOptions -contains 'ProtectedMode') { 
