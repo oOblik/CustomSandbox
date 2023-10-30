@@ -21,11 +21,11 @@ Hide-Taskbar
 Hide-Icons
 Restart-Explorer
 
-Write-Host 'Pre-Config Tasks...'
+Write-Host 'Pre-Configuration Tasks...'
 
 Invoke-ExecuteTaskList -TaskList $PreConfigTasks -Type "Pre-Configuration Tasks"
 
-Write-Host 'Running Config Tasks...'
+Write-Host 'Running Configuration Tasks...'
 
 Invoke-ExecuteTaskList -TaskList $ConfigTasks -Type "Configuration Tasks"
 
@@ -41,7 +41,7 @@ Update-WallPaper -Path "$CSMountPath\Wallpaper.jpg"
 Show-Taskbar
 Show-Icons
 
-Write-Host 'Running Post-Config Tasks...'
+Write-Host 'Running Post-Configuration Tasks...'
 
 Invoke-ExecuteTaskList -TaskList $PostConfigTasks -Type "Post-Configuration Tasks"
 
