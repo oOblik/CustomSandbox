@@ -136,12 +136,12 @@ function Show-Notification {
         [string][parameter(ValueFromPipeline)]$Text
     )
 
-$TemplateXML = @"
+    $TemplateXML = @"
 <toast>
 	<visual>
 		<binding template="ToastGeneric">
-			<text id="title"></text>
-			<text id="text"></text>
+			<text id="0"></text>
+			<text id="1"></text>
 		</binding>
 	</visual>
 </toast>
@@ -149,8 +149,8 @@ $TemplateXML = @"
 
 	$TemplateContent = [Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime]::New()
 	$TemplateContent.loadXml($TemplateXML)
-	$TemplateContent.SelectSingleNode('//text[@id="title"]').InnerText = $Title
-	$TemplateContent.SelectSingleNode('//text[@id="text"]').InnerText = $Text
+	$TemplateContent.SelectSingleNode('//text[@id="0"]').InnerText = $Title
+	$TemplateContent.SelectSingleNode('//text[@id="1"]').InnerText = $Text
 	$AppId = '{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}\WindowsPowerShell\v1.0\powershell.exe'
 
 	return [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime]::CreateToastNotifier($AppId).Show($TemplateContent)
