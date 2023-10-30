@@ -70,6 +70,7 @@ class InteractiveMultiMenu {
 
     [object[]] GetSelections() {
         Clear-Host
+        [System.Console]::CursorVisible = $False
         $shouldContinue = $true
         do {
             [Console]::CursorLeft = 0
@@ -100,6 +101,8 @@ class InteractiveMultiMenu {
             $keyPress = [Console]::ReadKey("NoEcho,IncludeKeyDown")
             $shouldContinue = $this.ProcessKey($keyPress)
         } while ($shouldContinue)
+
+        [System.Console]::CursorVisible = $True
 
         return $this.SelectedItems
     }
@@ -336,6 +339,9 @@ class InteractiveMenuChooseMenu {
 
     [string] GetAnswer() {
         $shouldContinue = $true
+
+        [System.Console]::CursorVisible = $False
+
         do {
             Clear-Host
             if ($this.Help) {
@@ -353,6 +359,8 @@ class InteractiveMenuChooseMenu {
             $keyPress = [Console]::ReadKey("NoEcho,IncludeKeyDown")
             $shouldContinue = $this.ProcessKey($keyPress)
         } while ($shouldContinue)
+
+        [System.Console]::CursorVisible = $True
 
         if ($null -eq $this.SelectedOption) {
             return $null
