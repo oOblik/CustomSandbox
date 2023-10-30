@@ -6,27 +6,40 @@ Start-Transcript -Path "C:\Windows\Temp\CustomSandbox.txt"
 Import-Module ".\Modules\InteractiveMenu\InteractiveMenu.psd1"
 . ".\Config\Helpers.ps1"
 
-$InConfig = @"
+
+$Config = @{}
+
+$ConfigPath = "$PSScriptRoot\config.json"
+if(Test-Path $ConfigPath) {
+    try {
+        $Config = Get-Content -Path $ConfigPath | ConvertFrom-Json
+        Write-Host "Configuration loaded from $ConfigPath"
+    } catch {
+        Write-Error "Failed to load configuration found at $ConfigPath"
+    }
+}
+
+$WSConfig = @"
 <Configuration>
     <VGpu>Disable</VGpu>
     <Networking>Disable</Networking>
     <ProtectedClient>Disable</ProtectedClient>
     <MappedFolders>
-         <MappedFolder>
+        <MappedFolder>
             <HostFolder></HostFolder>
             <SandboxFolder>C:\Config</SandboxFolder>
             <ReadOnly>true</ReadOnly>
         </MappedFolder>
     </MappedFolders>
     <ClipboardRedirection>false</ClipboardRedirection>
-    <MemoryInMB>4096</MemoryInMB>
+    <MemoryInMB></MemoryInMB>
     <LogonCommand>
-     <Command>C:\Config\sandbox-setup.cmd</Command>
+        <Command>C:\Config\sandbox-setup.cmd</Command>
     </LogonCommand>
 </Configuration>
 "@
 
-$XML = [XML]$InConfig
+$XML = [XML]$WSConfig
 
 $CachePath = "$PSScriptRoot\Config\Cache"
 
@@ -52,38 +65,53 @@ $MenuItems = @(
         -Item "ProtectedMode" `
         -Label "Protected Mode" `
         -Order 0 `
-        -Info "If enabled Windows sandbox will be launched in Protected Mode."
+        -Info "If enabled Windows sandbox will be launched in Protected Mode."  `
+        -Selected:($Config.ProtectedMode)
     Get-InteractiveMultiMenuOption `
         -Item "Networking" `
         -Label "Networking" `
         -Order 1 `
         -Info "Enable networking." `
-        -Selected
+        -Selected:($Config.Networking)
     Get-InteractiveMultiMenuOption `
         -Item "vGPU" `
         -Label "vGPU" `
         -Order 2 `
         -Info "Enable vGPU." `
-        -Selected
+        -Selected:($Config.vGPU)
     Get-InteractiveMultiMenuOption `
         -Item "Clipboard" `
         -Label "Allow Clipboard" `
         -Order 3 `
         -Info "If enabled clipboard access in the sandbox will be allowed." `
-        -Selected
+        -Selected:($Config.Clipboard)
     Get-InteractiveMultiMenuOption `
         -Item "UpdateCache" `
         -Label "Update Cached Installers" `
         -Order 4 `
-        -Info "If enabled all selected applications will be re-downloaded/updated."
+        -Info "If enabled all selected applications will be re-downloaded/updated."  `
+        -Selected:($Config.UpdateCache)
     Get-InteractiveMultiMenuOption `
         -Item "CustomRam" `
         -Label "Set RAM amount" `
         -Order 5 `
-        -Info "If enabled you will be prompted to set a value for the amount of RAM allocated for the sandbox."
+        -Info "If enabled you will be prompted to set a value for the amount of RAM allocated for the sandbox." `
+        -Selected:($Config.CustomRam)
+    Get-InteractiveMultiMenuOption `
+        -Item "SaveConfig" `
+        -Label "Save Configuration" `
+        -Order 6 `
+        -Info "If enabled configuration/tasks will be saved for later runs."  `
+        -Selected:($Config.SaveConfig)
 )
 
 $SelectedOptions = Get-InteractiveMenuUserSelection -Header $MenuHeader -Items $MenuItems
+
+if($Config.MemoryInMB) {
+    $XML.Configuration.MemoryInMB = $Config.MemoryInMB
+} else {
+    $XML.Configuration.MemoryInMB = "4096"
+}
 
 if ($SelectedOptions -contains 'CustomRam') {
 
@@ -99,30 +127,61 @@ if ($SelectedOptions -contains 'CustomRam') {
     $CustomRam = Get-InteractiveMenuChooseUserSelection -Question $RAMHeader -Answers $RAMItems
 
     $XML.Configuration.MemoryInMB = $CustomRam
-
+    
+    $Config | Add-Member -NotePropertyName 'CustomRam' -NotePropertyValue $True -Force
+    $Config | Add-Member -NotePropertyName 'MemoryInMB' -NotePropertyValue $CustomRam -Force
+} else {
+    $Config | Add-Member -NotePropertyName 'CustomRam' -NotePropertyValue $False -Force
+    $Config | Add-Member -NotePropertyName 'MemoryInMB' -NotePropertyValue $False -Force
 }
 
 
-if ($SelectedOptions -contains 'UpdateCache') { 
+if ($SelectedOptions -contains 'UpdateCache') {
     $ForceUpdates = $True
+    $Config | Add-Member -NotePropertyName 'UpdateCache' -NotePropertyValue $True -Force
 } else {
     $ForceUpdates = $False
+    $Config | Add-Member -NotePropertyName 'UpdateCache' -NotePropertyValue $False -Force
 }
 
-$TaskOptions = Get-ChildItem -Path "$PSScriptRoot\Config\Tasks\*.ps1" | Select-Object BaseName, FullName | Out-GridView -OutputMode Multiple -Title '[Ctrl + Click] to choose tasks to run:'
+
+$TaskScripts = Get-ChildItem -Path "$PSScriptRoot\Config\Tasks\*.ps1"
+
+$TaskHeader = "Choose tasks to run:"
+$TaskItems = @()
+
+foreach($Task in $TaskScripts) {
+
+    $Order = 1
+    switch($Task.BaseName) {
+        {$_ -like 'PreConfig-*'} { $Order = 0 }
+        {$_ -like 'PostConfig-*'} { $Order = 2 }
+    }
+
+    $TaskItems += Get-InteractiveMultiMenuOption -Item $Task.BaseName `
+        -Label $Task.BaseName `
+        -Order $Order `
+        -Info $Task.FullName `
+        -Selected:($Config.Tasks -contains $Task.BaseName)
+}
+
+$SelectedTasks = Get-InteractiveMenuUserSelection -Header $TaskHeader -Items $TaskItems
+
+$Config.Tasks = @()
+$Config.Tasks = $SelectedTasks
 
 $EnabledTasks = @()
 
-ForEach ($Task in $TaskOptions) {
+ForEach ($Task in $SelectedTasks) {
     $EnabledTasks += @(
         [PSCustomObject]@{
-            BaseName=$Task.BaseName;
-            FullName="C:\Config\Tasks\$($Task.BaseName).ps1"
+            BaseName=$Task;
+            FullName="C:\Config\Tasks\$Task.ps1"
         }
     )
 
-    Write-Host "Running Update action for task $($Task.BaseName)..."
-    & "$($Task.FullName)" -Action Update -ForceUpdate $ForceUpdates
+    Write-Host "Running Update action for task $Task..."
+    & "$PSScriptRoot\Config\Tasks\$Task.ps1" -Action Update -ForceUpdate $ForceUpdates
 }
 
 Write-Host "Writing Task Configuration..."
@@ -135,22 +194,42 @@ $XML.Configuration.MappedFolders.MappedFolder.HostFolder = [string](Join-Path $P
 
 if ($SelectedOptions -contains 'ProtectedMode') { 
     $XML.Configuration.ProtectedClient = "Enable"
+    $Config | Add-Member -NotePropertyName 'ProtectedMode' -NotePropertyValue $True -Force
+} else {
+    $Config | Add-Member -NotePropertyName 'ProtectedMode' -NotePropertyValue $False -Force
 }
 
 if ($SelectedOptions -contains 'Networking') { 
-     $XML.Configuration.Networking = "Enable"
+    $XML.Configuration.Networking = "Enable"
+    $Config | Add-Member -NotePropertyName 'Networking' -NotePropertyValue $True -Force
+} else {
+    $Config | Add-Member -NotePropertyName 'Networking' -NotePropertyValue $False -Force
 }
 
 if ($SelectedOptions -contains 'vGPU') { 
-     $XML.Configuration.VGpu = "Enable"
+    $XML.Configuration.VGpu = "Enable"
+    $Config | Add-Member -NotePropertyName 'vGPU' -NotePropertyValue $True -Force
+} else {
+    $Config | Add-Member -NotePropertyName 'vGPU' -NotePropertyValue $False -Force
 }
 
 if ($SelectedOptions -contains 'Clipboard') { 
     $XML.Configuration.ClipboardRedirection = "true"
+    $Config | Add-Member -NotePropertyName 'Clipboard' -NotePropertyValue $True -Force
+} else {
+    $Config | Add-Member -NotePropertyName 'Clipboard' -NotePropertyValue $False -Force
 }
 
 Write-Host "Writing Sandbox Configuration..."
 $XML.Save($OutConfig)
+
+if($SelectedOptions -contains 'SaveConfig') {
+    Write-Host "Writing Configuration to $ConfigPath..."
+    $Config | Add-Member -NotePropertyName 'SaveConfig' -NotePropertyValue $True -Force
+    $Config | ConvertTo-Json | Set-Content -Path $ConfigPath -Encoding UTF8
+} else {
+    $Config | Add-Member -NotePropertyName 'SaveConfig' -NotePropertyValue $False -Force
+}
 
 Pause
 
