@@ -3,9 +3,8 @@ $ProgressPreference = 'SilentlyContinue'
 
 Start-Transcript -Path "C:\Windows\Temp\CustomSandbox.txt"
 
-Import-Module ".\Modules\InteractiveMenu\InteractiveMenu.psd1"
+. ".\Config\Menu.ps1"
 . ".\Config\Helpers.ps1"
-
 
 $Config = @{}
 
@@ -61,51 +60,44 @@ Choose your options:
 "@
 
 $MenuItems = @(
-    Get-InteractiveMultiMenuOption `
-        -Item "ProtectedMode" `
-        -Label "Protected Mode" `
+    Get-MenuItem `
+	    -Label "Protected Mode" `
+        -Value "ProtectedMode" `
         -Order 0 `
-        -Info "If enabled Windows sandbox will be launched in Protected Mode."  `
         -Selected:($Config.ProtectedMode)
-    Get-InteractiveMultiMenuOption `
-        -Item "Networking" `
+    Get-MenuItem `
         -Label "Networking" `
+		-Value "Networking" `
         -Order 1 `
-        -Info "Enable networking." `
         -Selected:($Config.Networking)
-    Get-InteractiveMultiMenuOption `
-        -Item "vGPU" `
-        -Label "vGPU" `
+    Get-MenuItem `
+	    -Label "vGPU" `
+        -Value "vGPU" `
         -Order 2 `
-        -Info "Enable vGPU." `
         -Selected:($Config.vGPU)
-    Get-InteractiveMultiMenuOption `
-        -Item "Clipboard" `
+    Get-MenuItem `
         -Label "Allow Clipboard" `
+		-Value "Clipboard" `
         -Order 3 `
-        -Info "If enabled clipboard access in the sandbox will be allowed." `
         -Selected:($Config.Clipboard)
-    Get-InteractiveMultiMenuOption `
-        -Item "UpdateCache" `
+    Get-MenuItem `
         -Label "Update Cached Installers" `
+		-Value "UpdateCache" `
         -Order 4 `
-        -Info "If enabled all selected applications will be re-downloaded/updated."  `
         -Selected:($Config.UpdateCache)
-    Get-InteractiveMultiMenuOption `
-        -Item "CustomRam" `
+    Get-MenuItem `
         -Label "Set RAM amount" `
+		-Value "CustomRam" `
         -Order 5 `
-        -Info "If enabled you will be prompted to set a value for the amount of RAM allocated for the sandbox." `
         -Selected:($Config.CustomRam)
-    Get-InteractiveMultiMenuOption `
-        -Item "SaveConfig" `
+    Get-MenuItem `
         -Label "Save Configuration" `
+		-Value "SaveConfig" `
         -Order 6 `
-        -Info "If enabled configuration/tasks will be saved for later runs."  `
         -Selected:($Config.SaveConfig)
 )
 
-$SelectedOptions = Get-InteractiveMenuUserSelection -Header $MenuHeader -Items $MenuItems
+$SelectedOptions = Get-MenuSelection -Header $MenuHeader -Items $MenuItems -Mode Multi
 
 if($Config.MemoryInMB) {
     $XML.Configuration.MemoryInMB = $Config.MemoryInMB
@@ -120,11 +112,13 @@ if ($SelectedOptions -contains 'CustomRam') {
     $MaxFreeRam = [Math]::Round((Get-CIMInstance Win32_OperatingSystem | Select-Object FreePhysicalMemory).FreePhysicalMemory / 1024)
 
     $RAMItems = @()
+    $RamOrder = 0
     for($RamVal = 1024; $RamVal -le $MaxFreeRam; $RamVal += 1024) {
-        $RAMItems += Get-InteractiveChooseMenuOption -Label "$RamVal" -Value "$RamVal" -Info "$RamVal"
+        $RAMItems += Get-MenuItem -Label "$RamVal" -Value "$RamVal" -Order $RamOrder
+        $RamOrder++
     }
 
-    $CustomRam = Get-InteractiveMenuChooseUserSelection -Question $RAMHeader -Answers $RAMItems
+    $CustomRam = Get-MenuSelection -Header $RAMHeader -Items $RAMItems -Mode Single
 
     $XML.Configuration.MemoryInMB = $CustomRam
     
@@ -158,14 +152,14 @@ foreach($Task in $TaskScripts) {
         {$_ -like 'PostConfig-*'} { $Order = 2 }
     }
 
-    $TaskItems += Get-InteractiveMultiMenuOption -Item $Task.BaseName `
+    $TaskItems += Get-MenuItem `
         -Label $Task.BaseName `
+        -Value $Task.BaseName `
         -Order $Order `
-        -Info $Task.FullName `
         -Selected:($Config.Tasks -contains $Task.BaseName)
 }
 
-$SelectedTasks = Get-InteractiveMenuUserSelection -Header $TaskHeader -Items $TaskItems
+$SelectedTasks = Get-MenuSelection -Header $TaskHeader -Items $TaskItems -Mode Multi
 
 $Config.Tasks = @()
 $Config.Tasks = $SelectedTasks
