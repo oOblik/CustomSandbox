@@ -1,5 +1,34 @@
 $CSMountPath = "$Env:SYSTEMDRIVE\Config"
 
+function Get-FriendlySize {
+    param([int]$MBytes)
+
+    $bytes = $MBytes*1024*1024
+
+    $result = "{0} B " -f $bytes
+
+    switch($bytes) {
+        { $_ -ge 1tb } { 
+            $result = "{0:n2} TB" -f ($_ / 1tb)
+            break;
+        }
+        { $_ -ge 1gb } { 
+            $result = "{0:n2} GB" -f ($_ / 1gb) 
+            break;
+        }
+        { $_ -ge 1mb } { 
+            $result = "{0:n2} MB " -f ($_ / 1mb) 
+            break;
+        }
+        { $_ -ge 1kb } { 
+            $result = "{0:n2} KB " -f ($_ / 1Kb)
+            break;
+        }
+    }
+
+    return $result;
+}
+
 function Invoke-ExecuteTaskList {
     param(
         [array]$TaskList,

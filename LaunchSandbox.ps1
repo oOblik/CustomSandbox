@@ -107,14 +107,19 @@ if($Config.MemoryInMB) {
 
 if ($SelectedOptions -contains 'CustomRam') {
 
-    $RAMHeader = "Set RAM to allocate to sandbox in MB:"
+    $RAMHeader = "Set maximum amount of RAM to allocate to sandbox:"
 
     $MaxFreeRam = [Math]::Round((Get-CIMInstance Win32_OperatingSystem | Select-Object FreePhysicalMemory).FreePhysicalMemory / 1024)
+
+    if($MaxFreeRam -lt 1024) {
+        Write-Error "Not enough free memory to run Windows Sandbox."
+        Return
+    }
 
     $RAMItems = @()
     $RamOrder = 0
     for($RamVal = 1024; $RamVal -le $MaxFreeRam; $RamVal += 1024) {
-        $RAMItems += Get-MenuItem -Label "$RamVal" -Value "$RamVal" -Order $RamOrder
+        $RAMItems += Get-MenuItem -Label (Get-FriendlySize -MBytes $RamVal) -Value $RamVal -Order $RamOrder
         $RamOrder++
     }
 
