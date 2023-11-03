@@ -1,3 +1,5 @@
+#Requires -Version 5
+
 $ErrorActionPreference = 'Continue'
 $ProgressPreference = 'SilentlyContinue'
 
