@@ -108,7 +108,11 @@ Class Menu {
         $HeaderColor = [ConsoleColor]::Magenta
 
         $WindowSize = (Get-Host).UI.RawUI.WindowSize
-        $maxHeight = $WindowSize.Height - 8
+
+        $maxHeight = $WindowSize.Height - ($this.Header | Measure-Object -Line).Lines - 6
+        if($maxHeight -lt 1) {
+            $maxHeight = 1
+        }
 
         Write-Host $this.Header -ForegroundColor $HeaderColor
         Write-Host
@@ -122,6 +126,9 @@ Class Menu {
         $ShowMore = $False
 
         for($i = 0; $i -lt $this.Items.count; $i++) {
+
+            $ForegroundColor = $DefaultForegroundColor
+            $BackgroundColor = $DefaultBackgroundColor
 
             if($this.CurrentIndex -gt $maxHeight) {
                 if($i -lt ($this.CurrentIndex - $maxHeight)) {
@@ -143,14 +150,6 @@ Class Menu {
             $Selected = ($this.Items[$i].Selected)
             $ReadOnly = ($this.Items[$i].ReadOnly)
 
-            if($CurrentItem) {
-                (Get-Host).UI.RawUI.BackgroundColor = [ConsoleColor]::DarkGreen
-            }
-
-            if($this.Mode -eq "Multi" -and $ReadOnly) {
-                (Get-Host).UI.RawUI.ForegroundColor = [ConsoleColor]::DarkGray
-            }
-
             $Prefix = " "
 
             if($this.Mode -eq "Multi") {
@@ -171,10 +170,16 @@ Class Menu {
                 $ItemString = $ItemString.Substring(0,($WindowSize.Width-3)) + '...'
             }
 
-            Write-Host $ItemString
+            if($CurrentItem) {
+                $BackgroundColor = [ConsoleColor]::DarkGreen
+            }
 
-            (Get-Host).UI.RawUI.ForegroundColor = $DefaultForegroundColor
-            (Get-Host).UI.RawUI.BackgroundColor = $DefaultBackgroundColor
+            if($this.Mode -eq "Multi" -and $ReadOnly) {
+                $ForegroundColor = [ConsoleColor]::DarkGray
+            }
+
+            Write-Host $ItemString -ForegroundColor $ForegroundColor -BackgroundColor $BackgroundColor
+
         }
 
         if($ShowMore) {
