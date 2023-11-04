@@ -51,9 +51,8 @@ git clone https://github.com/oOblik/CustomSandbox.git
 Or, download and extract with PowerShell.
 
 ```ps1
-Invoke-WebRequest 'https://github.com/oOblik/CustomSandbox/archive/refs/heads/main.zip' -OutFile .\CustomSandbox.zip
+Invoke-WebRequest 'https://github.com/oOblik/CustomSandbox/releases/latest/download/CustomSandbox.zip' -OutFile .\CustomSandbox.zip
 Expand-Archive .\CustomSandbox.zip .\
-Rename-Item .\CustomSandbox-main .\CustomSandbox
 Remove-Item .\CustomSandbox.zip
 ```
 
