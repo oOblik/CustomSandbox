@@ -83,4 +83,4 @@ Found a _bug_ or want a _new feature_? You can open a new `Issue` [here](https:/
 
 ## 📝 License
 
-Licensed under the [MIT](LICENSE.txt) license.
+Licensed under the [MIT](LICENSE) license.
