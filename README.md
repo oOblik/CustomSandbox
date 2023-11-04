@@ -1,2 +1,86 @@
-# CustomSandbox
-A PowerShell utility to automatically configure a custom environment within Windows Sandbox.
+<h2 align="center">
+<img src="https://raw.githubusercontent.com/oOblik/CustomSandbox/main/Resources/cs-logo-sbs.png" width="800">
+
+[![Latest Version](https://img.shields.io/github/release/oOblik/CustomSandbox?color=3FA9F5&label=latest%20version)](https://github.com/oOblik/CustomSandbox/releases/latest) [![Activity](https://img.shields.io/github/commit-activity/m/oOblik/CustomSandbox?color=3FA9F5)](https://github.com/oOblik/CustomSandbox/commits) [![Pull Requests](https://img.shields.io/github/issues-pr-closed/oOblik/CustomSandbox?color=3FA9F5)](https://github.com/oOblik/CustomSandbox/pulls)
+</h2>
+
+Do you frequently use [Windows Sandbox](https://learn.microsoft.com/en-us/windows/security/application-security/application-isolation/windows-sandbox/windows-sandbox-overview) but are tired of having to install common utilities on every launch?
+
+CustomSandbox is a PowerShell utility to facilitate quick automatic configuration of Windows Sandbox.
+
+Write custom tasks to install software or configure Windows in the sandbox immediately after launch, and selectively choose which tasks to run.
+
+## ✨ Features
+
+- Configure the following Windows Sandbox features before launch:
+  - Protected Mode
+  - Networking
+  - vGPU
+  - Clipboard
+  - Maximum memory allocated to Windows Sandbox (based on available free memory)
+- Custom configuration / software installation tasks
+- Built-in tasks for installation of the following applications:
+  - 7-Zip
+  - AdoptOpen Java JDK
+  - AdoptOpen Java JRE
+  - Apache OpenOffice
+  - Google Chrome
+  - HxD Hex Editor
+  - Hex Rays IDA Disassembler (free)
+  - ManageEngine MIB Browser
+  - Microsoft VS Code
+  - Mozilla Firefox
+  - Notepad++
+  - Windows Terminal
+
+Installation tasks pre-download and cache required installation files outside of the sandbox so they can be quickly re-used in successive runs, or installed if networking in the sandbox is disabled.
+
+## ✅ Requirements
+
+[Enable Windows Sandbox on Windows](https://learn.microsoft.com/en-us/windows/security/application-security/application-isolation/windows-sandbox/windows-sandbox-overview#prerequisites)
+
+⚠️ *DISCLAIMER:* _CustomSandbox has been tested with Windows 11 22H2 and PowerShell 5.1. While it should work from Windows 10 22H2 or later, your results may vary._
+
+## 💻 Installation / Usage
+
+You can clone the repository with git:
+
+```ps1
+git clone https://github.com/oOblik/CustomSandbox.git
+```
+Or, download and extract with PowerShell.
+
+```ps1
+Invoke-WebRequest 'https://github.com/oOblik/CustomSandbox/archive/refs/heads/main.zip' -OutFile .\CustomSandbox.zip
+Expand-Archive .\CustomSandbox.zip .\
+Rename-Item .\CustomSandbox-main .\CustomSandbox
+Remove-Item .\CustomSandbox.zip
+```
+
+```ps1
+cd CustomSandbox
+
+# Optional (only if needed)
+Set-ExecutionPolicy Unrestricted -Scope CurrentUser -Force
+Get-ChildItem -Recurse *.ps1 | Unblock-File
+
+# Launch
+.\LaunchSandbox.ps1
+```
+
+## 📸 Screenshots
+
+<h2 align="center">
+    <img src="https://raw.githubusercontent.com/oOblik/CustomSandbox/main/Resources/Screenshots/Sandbox.png" width="90%" /><br>
+    <img src="https://raw.githubusercontent.com/oOblik/CustomSandbox/main/Resources/Screenshots/Launcher.png" width="90%" /><br>
+    <img src="https://raw.githubusercontent.com/oOblik/CustomSandbox/main/Resources/Screenshots/Tasks.png" width="90%" /><br>
+    <img src="https://raw.githubusercontent.com/oOblik/CustomSandbox/main/Resources/Screenshots/Configuring.png" width="90%" /><br>
+</h2>
+
+## ➕ Contributing
+
+Found a _bug_ or want a _new feature_? You can open a new `Issue` [here](https://github.com/oOblik/CustomSandbox/issues/new/choose).
+
+## 📝 License
+
+Licensed under the [MIT](LICENSE.txt) license.
