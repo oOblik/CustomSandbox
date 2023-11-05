@@ -5,23 +5,20 @@ param(
     [bool]$ForceUpdate
 )
 
-$OutPath = "$PSScriptRoot\..\Cache\OpenJDK11U-jdk_winx64_latest.msi"
-$RunPath = "C:\Windows\TEMP\OpenJDK11U-jdk_winx64_latest.msi"
+$OutPath = "$PSScriptRoot\..\Cache\OpenJDK-jdk_winx64_latest.msi"
+$RunPath = "C:\Windows\TEMP\OpenJDK-jdk_winx64_latest.msi"
 
 switch($Action.ToLower()) {
     "update" {
         if(!$ForceUpdate -and (Test-Path $OutPath)) { break; }
 
-        $JsonURL = "https://api.adoptopenjdk.net/v3/assets/latest/11/hotspot?release=latest&jvm_impl=hotspot&vendor=adoptopenjdk"
-        $JsonResponse = Invoke-WebRequest -Uri $JsonURL
+        $JsonURL = "https://api.adoptium.net/v3/info/available_releases"
+        $JsonResponse = Invoke-RestMethod -Uri $JsonURL -Method GET
 
-        if($JsonResponse.Content) {
-            $JSON = ConvertFrom-Json $JsonResponse.Content
-
-            $DownloadURL = ($JSON | Where-Object {$_.binary.os -eq 'windows' -and $_.binary.image_type -eq 'jdk' -and $_.binary.architecture -eq 'x64'}).binary.installer.link
+        if($JsonResponse.most_recent_lts) {
+            $DownloadURL = "https://api.adoptium.net/v3/installer/latest/$($JsonResponse.most_recent_lts)/ga/windows/x64/jdk/hotspot/normal/eclipse"
+            Invoke-WebRequest -Uri $DownloadURL -OutFile $OutPath
         }
-
-        Invoke-WebRequest -Uri $DownloadURL -OutFile $OutPath
 
         break;
     }
