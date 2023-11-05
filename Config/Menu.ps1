@@ -7,9 +7,9 @@ Class MenuItem {
     [string]$Info
     [int]$Order
     [switch]$ReadOnly
-    [object]$Depends
+    [string[]]$Depends
 
-    MenuItem([string]$Label, [string]$Value, [switch]$Selected, [string]$Info, [int]$Order, [switch]$ReadOnly, [object]$Depends) {
+    MenuItem([string]$Label, [string]$Value, [switch]$Selected, [string]$Info, [int]$Order, [switch]$ReadOnly, [string[]]$Depends) {
         $this.Init($Label, $Value, $Selected, $Info, $Order, $ReadOnly, $Depends);
     }
 
@@ -20,7 +20,7 @@ Class MenuItem {
         [string]$Info,
         [int]$Order,
         [switch]$ReadOnly,
-        [object]$Depends
+        [string[]]$Depends
     ) {
         $this.Label = $Label
         $this.Value = $Value
@@ -46,7 +46,7 @@ Class Menu {
 
     Menu([string]$Header, [MenuItem[]]$Items, [string]$Mode) {
         $this.Header = $Header
-        $this.Items = $Items | Sort-Object { $_.Label } | Sort-Object { $_.Order }
+        $this.Items = $Items | Sort-Object { $_.Order }
         $this.Mode = $Mode
     }
 
