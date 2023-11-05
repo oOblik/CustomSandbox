@@ -53,6 +53,10 @@ if(!(Test-Path $UtilPath)) {
     New-Item -Path $UtilPath -ItemType Directory -Force | Out-Null
 }
 
+$CacheFiles = Get-ChildItem -Path $CachePath -File -Recurse
+$CacheSize = Get-FriendlySize -MBytes (($CacheFiles | Measure-Object Length -Sum).Sum / 1024 / 1024)
+
+
 $MenuHeader = @"
 CustomSandbox
 If you want access to any utilities/files inside the sandbox, add them to the following directory:
@@ -88,14 +92,19 @@ $MenuItems = @(
         -Order 4 `
         -Selected:($Config.UpdateCache)
     Get-MenuItem `
+        -Label "Clear Cache (Current Size: $CacheSize)" `
+		-Value "ClearCache" `
+        -Order 5 `
+        -Selected:($Config.ClearCache)
+    Get-MenuItem `
         -Label "Set RAM amount" `
 		-Value "CustomRam" `
-        -Order 5 `
+        -Order 6 `
         -Selected:($Config.CustomRam)
     Get-MenuItem `
         -Label "Save Configuration" `
 		-Value "SaveConfig" `
-        -Order 6 `
+        -Order 7 `
         -Selected:($Config.SaveConfig)
 )
 
@@ -136,6 +145,10 @@ if ($SelectedOptions -contains 'CustomRam') {
     $Config | Add-Member -NotePropertyName 'MemoryInMB' -NotePropertyValue $False -Force
 }
 
+if($SelectedOptions -contains 'ClearCache') {
+    Write-Host "Clearing cache..."
+    Get-ChildItem -Path $CachePath -Recurse | Remove-Item -Force
+}
 
 if ($SelectedOptions -contains 'UpdateCache') {
     $ForceUpdates = $True
