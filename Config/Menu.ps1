@@ -212,7 +212,7 @@ Class Menu {
         }
 
         Write-Host -NoNewline "[ESC]" -ForegroundColor Magenta
-        Write-Host -NoNewline ":Exit"
+        Write-Host ":Exit"
 
     }
 

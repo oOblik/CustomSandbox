@@ -33,6 +33,9 @@ $WSConfig = @"
         </MappedFolder>
     </MappedFolders>
     <ClipboardRedirection>false</ClipboardRedirection>
+    <PrinterRedirection>Disable</PrinterRedirection>
+    <AudioInput>Enable</AudioInput>
+    <VideoInput>Enable</VideoInput>
     <MemoryInMB></MemoryInMB>
     <LogonCommand>
         <Command>C:\Config\sandbox-setup.cmd</Command>
@@ -82,29 +85,44 @@ $MenuItems = @(
         -Order 2 `
         -Selected:($Config.vGPU)
     Get-MenuItem `
-        -Label "Allow Clipboard" `
-		-Value "Clipboard" `
+        -Label "Set RAM amount" `
+		-Value "CustomRam" `
         -Order 3 `
+        -Selected:($Config.CustomRam)
+    Get-MenuItem `
+        -Label "Enable Clipboard Redirection" `
+		-Value "Clipboard" `
+        -Order 4 `
         -Selected:($Config.Clipboard)
+    Get-MenuItem `
+        -Label "Enable Printer Redirection" `
+		-Value "PrinterRedirection" `
+        -Order 5 `
+        -Selected:($Config.PrinterRedirection)
+    Get-MenuItem `
+        -Label "Disable Audio Input" `
+		-Value "DisableAudioInput" `
+        -Order 6 `
+        -Selected:($Config.DisableAudioInput)
+    Get-MenuItem `
+        -Label "Disable Video Input" `
+		-Value "DisableVideoInput" `
+        -Order 7 `
+        -Selected:($Config.DisableVideoInput)
     Get-MenuItem `
         -Label "Update Cached Installers" `
 		-Value "UpdateCache" `
-        -Order 4 `
+        -Order 8 `
         -Selected:($Config.UpdateCache)
     Get-MenuItem `
         -Label "Clear Cache (Size: $CacheSize)" `
 		-Value "ClearCache" `
-        -Order 5 `
+        -Order 9 `
         -Selected:($Config.ClearCache)
-    Get-MenuItem `
-        -Label "Set RAM amount" `
-		-Value "CustomRam" `
-        -Order 6 `
-        -Selected:($Config.CustomRam)
     Get-MenuItem `
         -Label "Save Configuration" `
 		-Value "SaveConfig" `
-        -Order 7 `
+        -Order 10 `
         -Selected:($Config.SaveConfig)
 )
 
@@ -232,6 +250,27 @@ if ($SelectedOptions -contains 'Clipboard') {
     $Config | Add-Member -NotePropertyName 'Clipboard' -NotePropertyValue $True -Force
 } else {
     $Config | Add-Member -NotePropertyName 'Clipboard' -NotePropertyValue $False -Force
+}
+
+if ($SelectedOptions -contains 'PrinterRedirection') { 
+    $XML.Configuration.PrinterRedirection = "Enable"
+    $Config | Add-Member -NotePropertyName 'PrinterRedirection' -NotePropertyValue $True -Force
+} else {
+    $Config | Add-Member -NotePropertyName 'PrinterRedirection' -NotePropertyValue $False -Force
+}
+
+if ($SelectedOptions -contains 'DisableAudioInput') { 
+    $XML.Configuration.AudioInput = "Disable"
+    $Config | Add-Member -NotePropertyName 'DisableAudioInput' -NotePropertyValue $True -Force
+} else {
+    $Config | Add-Member -NotePropertyName 'DisableAudioInput' -NotePropertyValue $False -Force
+}
+
+if ($SelectedOptions -contains 'DisableVideoInput') { 
+    $XML.Configuration.VideoInput = "Disable"
+    $Config | Add-Member -NotePropertyName 'DisableVideoInput' -NotePropertyValue $True -Force
+} else {
+    $Config | Add-Member -NotePropertyName 'DisableVideoInput' -NotePropertyValue $False -Force
 }
 
 Write-Host "Writing Sandbox Configuration..."
