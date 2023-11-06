@@ -43,6 +43,7 @@ Class Menu {
 
     hidden [object[]]$SelectedItems = @()
     hidden [int]$CurrentIndex = 0
+    hidden [int]$maxHeight = 10
 
     Menu([string]$Header, [MenuItem[]]$Items, [string]$Mode) {
         $this.Header = $Header
@@ -72,8 +73,20 @@ Class Menu {
                     $this.CurrentIndex = $this.Items.Length -1;
                 }
             }
+            $([ConsoleKey]::PageDown) {
+                $this.CurrentIndex+=$this.maxHeight
+                if ($this.CurrentIndex -ge $this.Items.Length) {
+                    $this.CurrentIndex = $this.Items.Length -1;
+                }
+            }
             $([ConsoleKey]::UpArrow) {
                 $this.CurrentIndex--
+                if ($this.CurrentIndex -lt 0) {
+                    $this.CurrentIndex = 0;
+                }
+            }
+            $([ConsoleKey]::PageUp) {
+                $this.CurrentIndex-=$this.maxHeight
                 if ($this.CurrentIndex -lt 0) {
                     $this.CurrentIndex = 0;
                 }
@@ -92,7 +105,7 @@ Class Menu {
                 return $true
             }
             $([ConsoleKey]::Escape) {
-                return $true
+                exit
             }
             Default {
                 
@@ -109,15 +122,15 @@ Class Menu {
 
         $WindowSize = (Get-Host).UI.RawUI.WindowSize
 
-        $maxHeight = $WindowSize.Height - ($this.Header | Measure-Object -Line).Lines - 6
-        if($maxHeight -lt 1) {
-            $maxHeight = 1
+        $this.maxHeight = $WindowSize.Height - ($this.Header | Measure-Object -Line).Lines - 6
+        if($this.maxHeight -lt 1) {
+            $this.maxHeight = 1
         }
 
         Write-Host $this.Header -ForegroundColor $HeaderColor
         Write-Host
 
-        if($this.CurrentIndex -gt $maxHeight) {
+        if($this.CurrentIndex -gt $this.maxHeight) {
             Write-Host (" {0} More {0} " -f [char]9650) -ForegroundColor Yellow
         } else {
             Write-Host
@@ -130,8 +143,8 @@ Class Menu {
             $ForegroundColor = $DefaultForegroundColor
             $BackgroundColor = $DefaultBackgroundColor
 
-            if($this.CurrentIndex -gt $maxHeight) {
-                if($i -lt ($this.CurrentIndex - $maxHeight)) {
+            if($this.CurrentIndex -gt $this.maxHeight) {
+                if($i -lt ($this.CurrentIndex - $this.maxHeight)) {
                     continue;
                 }
 
@@ -140,7 +153,7 @@ Class Menu {
                     continue;
                 }
             } else {
-                if($i -gt $maxHeight) {
+                if($i -gt $this.maxHeight) {
                     $ShowMore = $True
                     continue;
                 }
@@ -188,7 +201,18 @@ Class Menu {
             Write-Host
         }
 
-        Write-Host
+        if($this.Mode -eq "Multi") {
+            Write-Host -NoNewline "[SPACE]" -ForegroundColor Magenta
+            Write-Host -NoNewline ":Select "
+            Write-Host -NoNewline "[ENTER]" -ForegroundColor Magenta
+            Write-Host -NoNewline ":Confirm "
+        } else {
+            Write-Host -NoNewline "[SPACE]/[ENTER]" -ForegroundColor Magenta
+            Write-Host -NoNewline ":Confirm "
+        }
+
+        Write-Host -NoNewline "[ESC]" -ForegroundColor Magenta
+        Write-Host -NoNewline ":Exit"
 
     }
 

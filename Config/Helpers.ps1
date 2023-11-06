@@ -17,11 +17,11 @@ function Get-FriendlySize {
             break;
         }
         { $_ -ge 1mb } { 
-            $result = "{0:n2} MB " -f ($_ / 1mb) 
+            $result = "{0:n2} MB" -f ($_ / 1mb) 
             break;
         }
         { $_ -ge 1kb } { 
-            $result = "{0:n2} KB " -f ($_ / 1Kb)
+            $result = "{0:n2} KB" -f ($_ / 1Kb)
             break;
         }
     }

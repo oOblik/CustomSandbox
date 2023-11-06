@@ -92,7 +92,7 @@ $MenuItems = @(
         -Order 4 `
         -Selected:($Config.UpdateCache)
     Get-MenuItem `
-        -Label "Clear Cache (Current Size: $CacheSize)" `
+        -Label "Clear Cache (Size: $CacheSize)" `
 		-Value "ClearCache" `
         -Order 5 `
         -Selected:($Config.ClearCache)
