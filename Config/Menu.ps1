@@ -47,7 +47,7 @@ Class Menu {
 
     Menu([string]$Header, [MenuItem[]]$Items, [string]$Mode) {
         $this.Header = $Header
-        $this.Items = $Items | Sort-Object { $_.Order }
+        $this.Items = $Items | Sort-Object -Property @{Expression = "Order"; Descending = $false}, @{Expression = "Label"; Descending = $false}
         $this.Mode = $Mode
     }
 

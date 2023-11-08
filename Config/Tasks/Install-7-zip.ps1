@@ -2,14 +2,16 @@ param(
     [Parameter()]
     [string]$Action,
     [Parameter()]
-    [bool]$ForceUpdate
+    [bool]$ForceCache,
+    [Parameter()]
+    [object]$Vars
 )
 
 $OutPath = "$PSScriptRoot\..\Cache\7ZipInstaller.exe"
 
-switch($Action.ToLower()) {
-    "update" {
-        if(!$ForceUpdate -and (Test-Path $OutPath)) { break; }
+switch($Action) {
+    "cache" {
+        if(!$ForceCache -and (Test-Path $OutPath)) { break; }
 
         $BaseURL = "https://www.7-zip.org"
         $WebResponse = Invoke-WebRequest "$BaseURL/download.html"

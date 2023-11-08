@@ -31,7 +31,7 @@ function Get-FriendlySize {
 
 function Invoke-ExecuteTaskList {
     param(
-        [array]$TaskList,
+        [object]$TaskList,
         [string]$Type
     )
 
@@ -64,16 +64,16 @@ function Invoke-ExecuteTaskList {
         [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime]::CreateToastNotifier($AppId).Show($ToastNotification)
 
         for ($Task = 0; $Task -lt $TaskList.Count; $Task++) {
-            Write-Host "Running Task $($TaskList[$Task].BaseName)..."
+            Write-Host "Running Task $($TaskList[$Task].Name)..."
             $Dictionary = [System.Collections.Generic.Dictionary[String, String]]::New()
-            $Dictionary.Add('progressTitle', $TaskList[$Task].BaseName)
+            $Dictionary.Add('progressTitle', $TaskList[$Task].Name)
             $Dictionary.Add('progressValue', ($Task+1) / $TaskList.Count)
             $Dictionary.Add('progressValueString', "Task $($Task+1)/$($TaskList.Count)")
             $NotificationData = [Windows.UI.Notifications.NotificationData]::New($Dictionary)
             $NotificationData.SequenceNumber = 2
             [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($AppId).Update($NotificationData, 'CustomSandbox')
         
-            & "$($TaskList[$Task].FullName)" -Action execute
+            $TaskList[$Task].ExecuteAction("execute", $false)
         }
         
         [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($AppId).Hide($ToastNotification)

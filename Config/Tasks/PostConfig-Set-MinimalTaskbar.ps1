@@ -2,11 +2,13 @@ param(
     [Parameter()]
     [string]$Action,
     [Parameter()]
-    [bool]$ForceUpdate
+    [bool]$ForceCache,
+    [Parameter()]
+    [object]$Vars
 )
 
-switch($Action.ToLower()) {
-    "update" {
+switch($Action) {
+    "cache" {
         break;
     }
 

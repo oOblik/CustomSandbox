@@ -1,0 +1,6 @@
+{
+    "id": "adoptopen-java-jdk17x86",
+    "name": "Install AdoptOpen Java JDK 17 (x86)",
+    "type": "config",
+    "script": "Install-AdoptOpen-Java-JDK17x86.ps1"
+}

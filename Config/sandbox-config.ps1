@@ -3,16 +3,22 @@ $ProgressPreference = 'SilentlyContinue'
 
 $CSMountPath = "$Env:SYSTEMDRIVE\Config"
 
+. "$CSMountPath\Tasks.ps1"
 . "$CSMountPath\Helpers.ps1"
+
 
 Start-Transcript -Path "$Env:TEMP\CustomSandboxConfig.txt"
 
 Write-Host 'Importing Tasks...'
-$TaskOptions = Import-Csv -Path "$CSMountPath\Cache\EnabledTasks.csv"
+$TaskCollection = New-CustomSandboxTaskCollection -Path "$CSMountPath\Tasks"
+$TaskOptions = Get-Content -Path "$CSMountPath\Cache\EnabledTasks.json" | ConvertFrom-Json
 
-[array]$PreConfigTasks = $TaskOptions | Where-Object {$_.BaseName -like 'PreConfig-*'}
-[array]$PostConfigTasks = $TaskOptions | Where-Object {$_.BaseName -like 'PostConfig-*'}
-[array]$ConfigTasks = $TaskOptions | Where-Object {$_.BaseName -notlike 'PreConfig-*' -and $_.BaseName -notlike 'PostConfig-*'}
+$TaskCollection.Tasks = $TaskCollection.Tasks | Where-Object {$_.ID -in $TaskOptions}
+
+
+$PreConfigTasks = $TaskCollection.Tasks | Where-Object {$_.Type -eq 'preconfig'}
+$PostConfigTasks = $TaskCollection.Tasks | Where-Object {$_.Type -eq 'postconfig'}
+$ConfigTasks = $TaskCollection.Tasks | Where-Object {$_.Type -ne 'preconfig' -and $_.Type -ne 'postconfig'}
 
 #Set limited GUI for configuration mode
 Write-Host 'Setting Initial Wallpaper...'

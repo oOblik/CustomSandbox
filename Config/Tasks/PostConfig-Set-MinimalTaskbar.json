@@ -1,0 +1,6 @@
+{
+    "id": "minimaltaskbar",
+    "name": "Minimal Taskbar",
+    "type": "postconfig",
+    "script": "PostConfig-Set-MinimalTaskbar.ps1"
+}

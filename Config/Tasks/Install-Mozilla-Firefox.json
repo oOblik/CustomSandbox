@@ -1,0 +1,6 @@
+{
+    "id": "mozilla-firefox",
+    "name": "Install Mozilla Firefox (Latest)",
+    "type": "config",
+    "script": "Install-Mozilla-Firefox.ps1"
+}

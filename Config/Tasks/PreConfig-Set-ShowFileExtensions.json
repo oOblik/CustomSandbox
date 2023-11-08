@@ -1,0 +1,6 @@
+{
+    "id": "showfileextensions",
+    "name": "Show File Extensions",
+    "type": "preconfig",
+    "script": "PreConfig-Set-ShowFileExtensions.ps1"
+}

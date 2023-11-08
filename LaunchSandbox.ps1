@@ -5,8 +5,9 @@ $ProgressPreference = 'SilentlyContinue'
 
 Start-Transcript -Path "C:\Windows\Temp\CustomSandbox.txt"
 
-. ".\Config\Menu.ps1"
-. ".\Config\Helpers.ps1"
+. "$PSScriptRoot\Config\Tasks.ps1"
+. "$PSScriptRoot\Config\Menu.ps1"
+. "$PSScriptRoot\Config\Helpers.ps1"
 
 $Config = @{}
 
@@ -169,55 +170,50 @@ if($SelectedOptions -contains 'ClearCache') {
 }
 
 if ($SelectedOptions -contains 'UpdateCache') {
-    $ForceUpdates = $True
+    $ForceCache = $True
     $Config | Add-Member -NotePropertyName 'UpdateCache' -NotePropertyValue $True -Force
 } else {
-    $ForceUpdates = $False
+    $ForceCache = $False
     $Config | Add-Member -NotePropertyName 'UpdateCache' -NotePropertyValue $False -Force
 }
 
 
-$TaskScripts = Get-ChildItem -Path "$PSScriptRoot\Config\Tasks\*.ps1"
+
+$TaskCollection = New-CustomSandboxTaskCollection -Path "$PSScriptRoot\Config\Tasks"
 
 $TaskHeader = "Choose tasks to run:"
 $TaskItems = @()
 
-foreach($Task in $TaskScripts) {
+foreach($Task in $TaskCollection.Tasks) {
 
     $Order = 1
-    switch($Task.BaseName) {
-        {$_ -like 'PreConfig-*'} { $Order = 0 }
-        {$_ -like 'PostConfig-*'} { $Order = 2 }
+    switch($Task.Type) {
+        {$_ -eq 'preconfig'} { $Order = 0 }
+        {$_ -eq 'postconfig'} { $Order = 2 }
     }
 
     $TaskItems += Get-MenuItem `
-        -Label $Task.BaseName `
-        -Value $Task.BaseName `
+        -Label $Task.Name `
+        -Value $Task.ID `
         -Order $Order `
-        -Selected:($Config.Tasks -contains $Task.BaseName)
+        -Selected:($Config.Tasks -contains $Task.ID)
 }
 
 $SelectedTasks = Get-MenuSelection -Header $TaskHeader -Items $TaskItems -Mode Multi
 
+Clear-Host
+
 $Config.Tasks = @()
 $Config.Tasks = $SelectedTasks
 
-$EnabledTasks = @()
-
-ForEach ($Task in $SelectedTasks) {
-    $EnabledTasks += @(
-        [PSCustomObject]@{
-            BaseName=$Task;
-            FullName="C:\Config\Tasks\$Task.ps1"
-        }
-    )
-
-    Write-Host "Running Update action for task $Task..."
-    & "$PSScriptRoot\Config\Tasks\$Task.ps1" -Action Update -ForceUpdate $ForceUpdates
+$TaskCollection.Tasks | Where-Object {$_.ID -in $SelectedTasks} | ForEach-Object {
+    Write-Host "Running cache action for task $($_.Name)..."
+    $_.ExecuteAction("cache", $ForceCache)
 }
 
 Write-Host "Writing Task Configuration..."
-$EnabledTasks | Export-CSV -Path "$CachePath\EnabledTasks.csv" -NoTypeInformation -Force
+$SelectedTasks | Export-CSV -Path "$CachePath\EnabledTasks.csv" -NoTypeInformation -Force
+$SelectedTasks | ConvertTo-Json | Set-Content -Path "$CachePath\EnabledTasks.json" -Encoding UTF8
 
 Write-Host "Getting Sandbox Configuration..."
 $OutConfig = Join-Path $env:TEMP "CustomSandbox.wsb"

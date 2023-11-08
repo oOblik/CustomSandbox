@@ -2,16 +2,18 @@ param(
     [Parameter()]
     [string]$Action,
     [Parameter()]
-    [bool]$ForceUpdate
+    [bool]$ForceCache,
+    [Parameter()]
+    [object]$Vars
 )
 
 $OutPath = "$PSScriptRoot/../Cache/Microsoft.WindowsTerminal.msixbundle"
 $VCRedistOutPath = "$PSScriptRoot/../Cache/VC_redist.x64.exe"
 $UiXamlZipOutPath = "$PSScriptRoot/../Cache/Microsoft.UI.XAML.2.8.5.zip"
 
-switch($Action.ToLower()) {
-    "update" {
-        if(!$ForceUpdate -and (Test-Path $OutPath)) { break; }
+switch($Action) {
+    "cache" {
+        if(!$ForceCache -and (Test-Path $OutPath)) { break; }
 
         $Repo = "microsoft/terminal"
         $Releases = "https://api.github.com/repos/$Repo/releases"

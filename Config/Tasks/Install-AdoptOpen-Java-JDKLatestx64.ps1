@@ -2,15 +2,17 @@ param(
     [Parameter()]
     [string]$Action,
     [Parameter()]
-    [bool]$ForceUpdate
+    [bool]$ForceCache,
+    [Parameter()]
+    [object]$Vars
 )
 
 $OutPath = "$PSScriptRoot\..\Cache\OpenJDK-jdk_winx64_latest.msi"
 $RunPath = "C:\Windows\TEMP\OpenJDK-jdk_winx64_latest.msi"
 
-switch($Action.ToLower()) {
-    "update" {
-        if(!$ForceUpdate -and (Test-Path $OutPath)) { break; }
+switch($Action) {
+    "cache" {
+        if(!$ForceCache -and (Test-Path $OutPath)) { break; }
 
         $JsonURL = "https://api.adoptium.net/v3/info/available_releases"
         $JsonResponse = Invoke-RestMethod -Uri $JsonURL -Method GET

@@ -2,7 +2,9 @@ param(
     [Parameter()]
     [string]$Action,
     [Parameter()]
-    [bool]$ForceUpdate
+    [bool]$ForceCache,
+    [Parameter()]
+    [object]$Vars
 )
 
 $OutPath = "$PSScriptRoot\..\Cache\ManageEngine_MibBrowser_64bit.exe"
@@ -47,9 +49,9 @@ bOpt2=1
 
 '@
 
-switch($Action.ToLower()) {
-    "update" {
-        if(!$ForceUpdate -and (Test-Path $OutPath)) { break; }
+switch($Action) {
+    "cache" {
+        if(!$ForceCache -and (Test-Path $OutPath)) { break; }
 
         $DownloadURL = "https://download.manageengine.com/products/mibbrowser-free-tool/9229779/ManageEngine_MibBrowser_FreeTool_64bit.exe"
         Invoke-WebRequest -Uri $DownloadURL -OutFile $OutPath

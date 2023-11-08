@@ -1,0 +1,6 @@
+{
+    "id": "darkmode",
+    "name": "Dark Mode",
+    "type": "preconfig",
+    "script": "PreConfig-Set-DarkMode.ps1"
+}

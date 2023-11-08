@@ -2,15 +2,17 @@ param(
     [Parameter()]
     [string]$Action,
     [Parameter()]
-    [bool]$ForceUpdate
+    [bool]$ForceCache,
+    [Parameter()]
+    [object]$Vars
 )
 
 $OutPath = "$PSScriptRoot\..\Cache\OpenJDK17-jdk_winx86_latest.msi"
 $RunPath = "C:\Windows\TEMP\OpenJDK17-jdk_winx86_latest.msi"
 
-switch($Action.ToLower()) {
-    "update" {
-        if(!$ForceUpdate -and (Test-Path $OutPath)) { break; }
+switch($Action) {
+    "cache" {
+        if(!$ForceCache -and (Test-Path $OutPath)) { break; }
 
             $DownloadURL = "https://api.adoptium.net/v3/installer/latest/17/ga/windows/x86/jdk/hotspot/normal/eclipse"
             Invoke-WebRequest -Uri $DownloadURL -OutFile $OutPath

@@ -1,0 +1,6 @@
+{
+    "id": "adoptopen-java-jdklatestx64",
+    "name": "Install AdoptOpen Java JDK Latest (x64)",
+    "type": "config",
+    "script": "Install-AdoptOpen-Java-JDKLatestx64.ps1"
+}

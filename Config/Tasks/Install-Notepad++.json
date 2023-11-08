@@ -1,0 +1,6 @@
+{
+    "id": "notepadpp",
+    "name": "Install Notepad++ (Latest)",
+    "type": "config",
+    "script": "Install-Notepad++.ps1"
+}

@@ -2,15 +2,17 @@ param(
     [Parameter()]
     [string]$Action,
     [Parameter()]
-    [bool]$ForceUpdate
+    [bool]$ForceCache,
+    [Parameter()]
+    [object]$Vars
 )
 
 $OutArchivePath = "$PSScriptRoot/../Cache/BGInfo.zip"
 $OutPath = "$PSScriptRoot/../Cache/BGInfo.exe"
 
-switch($Action.ToLower()) {
-    "update" {
-        if(!$ForceUpdate -and (Test-Path $OutPath)) { break; }
+switch($Action) {
+    "cache" {
+        if(!$ForceCache -and (Test-Path $OutPath)) { break; }
 
         $DownloadURL = "https://download.sysinternals.com/files/BGInfo.zip"
         Invoke-WebRequest -Uri $DownloadURL -OutFile $OutArchivePath

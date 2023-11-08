@@ -2,16 +2,18 @@ param(
     [Parameter()]
     [string]$Action,
     [Parameter()]
-    [bool]$ForceUpdate
+    [bool]$ForceCache,
+    [Parameter()]
+    [object]$Vars
 )
 
 $OutPath = "$PSScriptRoot\..\Cache\npp.latest.Installer.x64.exe"
 $ThemeOutPath = "$PSScriptRoot\..\Cache\VS2015-Dark.xml"
 $ConfigPath = "$PSScriptRoot\..\Assets\NppConfig.xml"
 
-switch($Action.ToLower()) {
-    "update" {
-        if(!$ForceUpdate -and (Test-Path $OutPath)) { break; }
+switch($Action) {
+    "cache" {
+        if(!$ForceCache -and (Test-Path $OutPath)) { break; }
 
         $Repo = "notepad-plus-plus/notepad-plus-plus"
         $Releases = "https://api.github.com/repos/$Repo/releases"

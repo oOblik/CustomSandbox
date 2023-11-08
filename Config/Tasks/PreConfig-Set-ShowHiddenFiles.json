@@ -1,0 +1,6 @@
+{
+    "id": "showhiddenfiles",
+    "name": "Show Hidden Files",
+    "type": "preconfig",
+    "script": "PreConfig-Set-ShowHiddenFiles.ps1"
+}

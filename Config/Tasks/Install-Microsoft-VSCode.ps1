@@ -2,14 +2,16 @@ param(
     [Parameter()]
     [string]$Action,
     [Parameter()]
-    [bool]$ForceUpdate
+    [bool]$ForceCache,
+    [Parameter()]
+    [object]$Vars
 )
 
 $OutPath = "$PSScriptRoot\..\Cache\VSCodeUserSetup-x64-latest.exe"
 
-switch($Action.ToLower()) {
-    "update" {
-        if(!$ForceUpdate -and (Test-Path $OutPath)) { break; }
+switch($Action) {
+    "cache" {
+        if(!$ForceCache -and (Test-Path $OutPath)) { break; }
 
         $DownloadURL = "https://code.visualstudio.com/sha/download?build=stable&os=win32-x64-user"
         Invoke-WebRequest -Uri $DownloadURL -OutFile $OutPath
