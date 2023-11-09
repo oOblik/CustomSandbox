@@ -17,6 +17,9 @@ Write custom tasks to install software or configure Windows in the sandbox immed
   - Networking
   - vGPU
   - Clipboard
+  - Printer Redirection
+  - Audio Input
+  - Video Input
   - Maximum memory allocated to Windows Sandbox (based on available free memory)
 - Custom configuration / software installation tasks
 - Built-in tasks for installation of the following applications:
@@ -31,6 +34,7 @@ Write custom tasks to install software or configure Windows in the sandbox immed
   - Microsoft VS Code
   - Mozilla Firefox
   - Notepad++
+  - Sysinternals BGInfo
   - Windows Terminal
 
 Installation tasks pre-download and cache required installation files outside of the sandbox so they can be quickly re-used in successive runs, or installed if networking in the sandbox is disabled.
@@ -69,12 +73,12 @@ Get-ChildItem -Recurse *.ps1 | Unblock-File
 
 ## 📸 Screenshots
 
-<h2 align="center">
+<p align="center">
     <img src="https://raw.githubusercontent.com/oOblik/CustomSandbox/main/Resources/Screenshots/Sandbox.png" width="90%" /><br>
     <img src="https://raw.githubusercontent.com/oOblik/CustomSandbox/main/Resources/Screenshots/Launcher.png" width="90%" /><br>
     <img src="https://raw.githubusercontent.com/oOblik/CustomSandbox/main/Resources/Screenshots/Tasks.png" width="90%" /><br>
     <img src="https://raw.githubusercontent.com/oOblik/CustomSandbox/main/Resources/Screenshots/Configuring.png" width="90%" /><br>
-</h2>
+</p>
 
 ## ➕ Contributing
 
