@@ -6,9 +6,10 @@ class CustomSandboxTask {
     [string[]]$Requirements = @()
     [string]$Script = ""
     [object[]]$Vars = @{}
+    [int]$ProcessOrder
 
-    CustomSandboxTask([string]$ID, [string]$Name, [string]$Type, [string[]]$Dependencies,  [string[]]$Requirements, [string]$Script, [object]$Vars) {
-        $this.Init($ID, $Name, $Type, $Dependencies, $Requirements, $Script, $Vars);
+    CustomSandboxTask([string]$ID, [string]$Name, [string]$Type, [string[]]$Dependencies,  [string[]]$Requirements, [string]$Script, [object]$Vars, [int]$ProcessOrder) {
+        $this.Init($ID, $Name, $Type, $Dependencies, $Requirements, $Script, $Vars, $ProcessOrder);
     }
 
     hidden Init(
@@ -18,7 +19,8 @@ class CustomSandboxTask {
         [string[]]$Dependencies, 
         [string[]]$Requirements, 
         [string]$Script,
-        [object]$Vars
+        [object]$Vars,
+        [int]$ProcessOrder
     ) {
         $this.ID = $ID
         $this.Name = $Name
@@ -27,6 +29,7 @@ class CustomSandboxTask {
         $this.Requirements = $Requirements
         $this.Script = $Script
         $this.Vars = $Vars
+        $this.ProcessOrder = $ProcessOrder
     }
 
     [void] ExecuteAction(
@@ -44,6 +47,7 @@ class CustomSandboxTaskCollection {
 
     [void] Add([CustomSandboxTask]$Task) {
         $this.Tasks += $Task
+        $this.CalcProcessOrder()
     }
 
     [void] LoadFromDirectory([string]$Path) {
@@ -65,16 +69,42 @@ class CustomSandboxTaskCollection {
 
             $this.Add(
                 [CustomSandboxTask]::New(
-                    $TaskJson.id, 
-                    $TaskJson.name, 
-                    $TaskJson.type, 
-                    $TaskJson.dependencies, 
-                    $TaskJson.requirements, 
-                    $ScriptPath, 
-                    $TaskJson.vars
+                    $TaskJson.id,
+                    $TaskJson.name,
+                    $TaskJson.type,
+                    $TaskJson.dependencies,
+                    $TaskJson.requirements,
+                    $ScriptPath,
+                    $TaskJson.vars,
+                    0
                 )
             )
         }
+
+        $this.CalcProcessOrder()
+    }
+
+    [void] CalcProcessOrder() {
+
+        $this.Tasks | ForEach-Object {
+            $_.ProcessOrder = 0
+        }
+
+        for($i=0; $i -lt $this.Tasks.Count; $i++) {
+
+            foreach($Dep in $this.Tasks[$i].Dependencies) {
+
+                $DepTask = $this.Tasks | Where-Object { $_.id -eq $Dep }
+
+                if($DepTask.ProcessOrder -ge $this.Tasks[$i].ProcessOrder) {
+                    $DepTask.ProcessOrder = $this.Tasks[$i].ProcessOrder - 1
+                }
+
+            }
+
+        }
+
+        $this.Tasks = $this.Tasks | Sort-Object -Property ProcessOrder
     }
 }
 
@@ -86,7 +116,7 @@ function New-CustomSandboxTaskCollection {
     $TaskCollection = [CustomSandboxTaskCollection]::New()
     $TaskCollection.LoadFromDirectory($Path)
 
-    return $TaskCollection
+    return $TaskCollection | Sort-Object -Property ProcessOrder
 }
 
 function New-CustomSandboxTask {
@@ -97,8 +127,9 @@ function New-CustomSandboxTask {
         [string[]]$Dependencies = @(),
         [string[]]$Requirements = @(),
         [string]$Script,
-        [object[]]$Vars = @{}
+        [object[]]$Vars = @{},
+        [int]$ProcessOrder = 0
     )
 
-    return [CustomSandboxTask]::New($ID, $Name, $Type, $Dependencies, $Requirements, $Script, $Vars)
+    return [CustomSandboxTask]::New($ID, $Name, $Type, $Dependencies, $Requirements, $Script, $Vars, $ProcessOrder)
 }

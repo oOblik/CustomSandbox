@@ -42,6 +42,7 @@ Class Menu {
     [ValidateNotNullOrEmpty()][string]$Mode
 
     hidden [object[]]$SelectedItems = @()
+    hidden [string[]]$DependencyList = @()
     hidden [int]$CurrentIndex = 0
     hidden [int]$maxHeight = 10
 
@@ -94,7 +95,7 @@ Class Menu {
             $([ConsoleKey]::Spacebar) {
                 if($this.Mode -eq 'Multi') {
                     $CurrentItem = $this.GetCurrentItem()
-                    if (-not $CurrentItem.Readonly) {
+                    if (-not ($CurrentItem.Readonly -or $CurrentItem.Value -in $this.DependencyList)) {
                         $CurrentItem.Selected=!$CurrentItem.Selected;
                     }
                 } else {
@@ -160,13 +161,16 @@ Class Menu {
             }
 
             $CurrentItem = ($i -eq $this.CurrentIndex)
+            $Dependency = ($this.Items[$i].Value -in $this.DependencyList)
             $Selected = ($this.Items[$i].Selected)
             $ReadOnly = ($this.Items[$i].ReadOnly)
 
             $Prefix = " "
 
             if($this.Mode -eq "Multi") {
-                if($Selected) {
+                if($Dependency) {
+                    $Prefix = "[*]"
+                } elseif ($Selected) {
                     $Prefix = "[X]"
                 } else {
                     $Prefix = "[ ]"
@@ -187,7 +191,7 @@ Class Menu {
                 $BackgroundColor = [ConsoleColor]::DarkGreen
             }
 
-            if($this.Mode -eq "Multi" -and $ReadOnly) {
+            if($this.Mode -eq "Multi" -and ($ReadOnly -or $Dependency)) {
                 $ForegroundColor = [ConsoleColor]::DarkGray
             }
 
@@ -220,7 +224,7 @@ Class Menu {
         if($this.Mode -eq 'Multi') {
             $this.SelectedItems = @()
             foreach ($Item in $this.Items) {
-                if ($Item.Selected) {
+                if ($Item.Selected -or $Item.Value -in $this.DependencyList) {
                     $this.SelectedItems += $Item.Value
                 }
             }
@@ -240,6 +244,13 @@ Class Menu {
         do {
             Clear-Host
             
+            $this.DependencyList = @()
+            $this.Items | ForEach-Object {
+                if($_.Selected -and $_.Depends) {
+                    $this.DependencyList += $_.Depends
+                }
+            }
+
             $this.Draw()
 
             $Finished = $this.ProcessInput([Console]::ReadKey("NoEcho,IncludeKeyDown"))
@@ -261,7 +272,7 @@ function Get-MenuItem {
         [string]$Info = "",
         [int]$Order = 0,
         [switch]$ReadOnly,
-        [array]$Depends = @()
+        [string[]]$Depends = @()
         
     )
     [MenuItem]::New($Label, $Value, $Selected.IsPresent, $Info, $Order, $ReadOnly.IsPresent, $Depends)

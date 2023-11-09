@@ -196,6 +196,7 @@ foreach($Task in $TaskCollection.Tasks) {
         -Label $Task.Name `
         -Value $Task.ID `
         -Order $Order `
+        -Depends $Task.Dependencies `
         -Selected:($Config.Tasks -contains $Task.ID)
 }
 
