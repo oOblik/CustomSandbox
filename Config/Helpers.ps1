@@ -1,4 +1,5 @@
 $CSMountPath = "$Env:SYSTEMDRIVE\Config"
+$CSCachePath = "$Env:SYSTEMDRIVE\Config\Cache"
 
 function Get-FriendlySize {
     param([int]$MBytes)
@@ -183,4 +184,27 @@ function Show-Notification {
 	$AppId = '{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}\WindowsPowerShell\v1.0\powershell.exe'
 
 	return [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime]::CreateToastNotifier($AppId).Show($TemplateContent)
+}
+
+function Invoke-BlindFileDownload {
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$Url,
+        [Parameter(Mandatory=$true)]
+        [string]$FolderPath
+    )
+
+    $Request = [System.Net.HttpWebRequest]::Create($Url)
+    $Request.Method = "HEAD"
+    $Response = $Request.GetResponse()
+
+    $FileUri = $Response.ResponseUri
+    $Filename = [System.IO.Path]::GetFileName($FileUri.LocalPath);
+    $Response.Close()
+    
+    $Destination = Join-Path $FolderPath $Filename
+
+    Invoke-WebRequest -Uri $FileUri.AbsoluteUri -OutFile $Destination
+
+    return $Filename
 }

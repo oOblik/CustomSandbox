@@ -1,0 +1,10 @@
+{
+    "id": "chocolatey-core.extension",
+    "name": "Chocolatey - Install Core Extensions",
+    "dependencies": ["chocolatey","chocolatey-compatibility.extension"],
+    "type": "config",
+    "script": "Install-Chocolatey-Package.ps1",
+    "vars": {
+        "packagename": "chocolatey-core.extension"
+    }
+}

@@ -22,11 +22,14 @@ Write custom tasks to install software or configure Windows in the sandbox immed
   - Video Input
   - Maximum memory allocated to Windows Sandbox (based on available free memory)
 - Custom configuration / software installation tasks
-- Built-in tasks for installation of the following applications:
+- Built-in tasks for installation of the following:
   - 7-Zip
   - AdoptOpen Java JDK
   - AdoptOpen Java JRE
   - Apache OpenOffice
+  - Chocolatey 
+    - Google Chrome package is included as an example task.
+    - [Experimental] Installs are cached/internalized and can be done with networking disabled.
   - Google Chrome
   - HxD Hex Editor
   - Hex Rays IDA Disassembler (free)

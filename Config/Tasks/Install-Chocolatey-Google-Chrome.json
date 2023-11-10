@@ -1,0 +1,10 @@
+{
+    "id": "chocolatey-googlechrome",
+    "name": "Chocolatey - Install Google Chrome",
+    "dependencies": ["chocolatey","chocolatey-core.extension"],
+    "type": "config",
+    "script": "Install-Chocolatey-Package.ps1",
+    "vars": {
+        "packagename": "googlechrome"
+    }
+}
