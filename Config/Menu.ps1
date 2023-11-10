@@ -235,6 +235,33 @@ Class Menu {
         return $this.SelectedItems
     }
 
+    [void] CalcDependencies() {
+        $this.DependencyList = @()
+        $this.Items | ForEach-Object {
+            if($_.Selected -and $_.Depends) {
+                $_.Depends | ForEach-Object {
+                    $this.DependencyList += $_
+                }
+            }
+        }
+
+        $DepPasses = 0
+        do {
+            $Continue = $False
+
+            foreach($Dependency in $this.DependencyList) {
+                $NewDeps = ($this.Items | Where-Object {$_.Value -eq $Dependency}).Depends
+                foreach ($Dep in $NewDeps){
+                    if($Dep -notin $this.DependencyList) {
+                        $Continue = $True
+                        $this.DependencyList += $Dep
+                    }
+                }
+            }
+            $DepPasses++
+        } while ($Continue -and $DepPasses -lt $this.Items.Count)
+    }
+
     [object[]] GetSelections() {
         
         [System.Console]::CursorVisible = $False
@@ -242,14 +269,9 @@ Class Menu {
         $Finished = $False
 
         do {
-            Clear-Host
+            $this.CalcDependencies()
             
-            $this.DependencyList = @()
-            $this.Items | ForEach-Object {
-                if($_.Selected -and $_.Depends) {
-                    $this.DependencyList += $_.Depends
-                }
-            }
+            Clear-Host
 
             $this.Draw()
 
