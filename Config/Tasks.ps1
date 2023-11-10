@@ -90,19 +90,28 @@ class CustomSandboxTaskCollection {
             $_.ProcessOrder = 0
         }
 
-        for($i=0; $i -lt $this.Tasks.Count; $i++) {
+        $DepPasses = 0
 
-            foreach($Dep in $this.Tasks[$i].Dependencies) {
+        do {
+            $Continue = $true
 
-                $DepTask = $this.Tasks | Where-Object { $_.id -eq $Dep }
+            for($i=0; $i -lt $this.Tasks.Count; $i++) {
 
-                if($DepTask.ProcessOrder -ge $this.Tasks[$i].ProcessOrder) {
-                    $DepTask.ProcessOrder = $this.Tasks[$i].ProcessOrder - 1
+                foreach($Dep in $this.Tasks[$i].Dependencies) {
+
+                    $DepTask = $this.Tasks | Where-Object { $_.id -eq $Dep }
+
+                    if($DepTask.ProcessOrder -ge $this.Tasks[$i].ProcessOrder) {
+                        $DepTask.ProcessOrder = $this.Tasks[$i].ProcessOrder - 1
+                        $Continue = $false
+                    }
+
                 }
 
             }
 
-        }
+            $DepPasses++
+        } while($Continue -and $DepPasses -lt 1000)
 
         $this.Tasks = $this.Tasks | Sort-Object -Property ProcessOrder
     }
