@@ -166,7 +166,7 @@ if ($SelectedOptions -contains 'CustomRam') {
 
 if($SelectedOptions -contains 'ClearCache') {
     Write-Host "Clearing cache..."
-    Get-ChildItem -Path $CachePath -Recurse | Remove-Item -Force
+    Get-ChildItem -Path $CachePath | Remove-Item -Recurse -Force
 }
 
 if ($SelectedOptions -contains 'UpdateCache') {
