@@ -1,10 +1,10 @@
 param(
-    [Parameter()]
-    [string]$Action,
-    [Parameter()]
-    [bool]$ForceCache,
-    [Parameter()]
-    [object]$Vars
+  [Parameter()]
+  [string]$Action,
+  [Parameter()]
+  [bool]$ForceCache,
+  [Parameter()]
+  [object]$Vars
 )
 
 $PackageName = $Vars.packagename
@@ -22,66 +22,66 @@ $PgkWorkDir = Join-Path $CacheDir "package"
 $PkgInstallFile = "tools/chocolateyInstall.ps1"
 
 
-switch($Action) {
-    "cache" {
-        if(!$ForceCache -and (Test-Path $CheckPath)) { break; }
+switch ($Action) {
+  "cache" {
+    if (!$ForceCache -and (Test-Path $CheckPath)) { break; }
 
-        if(Test-Path $CacheDir) {
-            Remove-Item -Path $CacheDir -Recurse -Force
-        }
-
-        New-Item -Path $CacheDir -ItemType Directory -Force | Out-Null
-        New-Item -Path $PgkWorkDir -ItemType Directory -Force | Out-Null
-        
-        Invoke-WebRequest -Uri $PkgURL -OutFile $PkgPath
-        
-        if(!(Test-Path $PkgPath)) {
-            Write-Error "Failed to download package $PackageName"
-        }
-        
-        Expand-Archive -Path $PkgPath -DestinationPath $PgkWorkDir
-        
-        $PkgInstallFilePath = Join-Path $PgkWorkDir $PkgInstallFile
-        
-        if(Test-Path $PkgInstallFilePath) {
-        
-            $InstallFile = Get-Content -Path $PkgInstallFilePath
-            
-            $URLPattern = "(?<=['`"])(http[s]?)(:\/\/)([^\s,]+)(?<!['`"])"
-            
-            $InstallFile | Select-String -AllMatches $URLPattern | ForEach-Object {
-                $DLFileName = Invoke-BlindFileDownload -Url $_.Matches.Value -FolderPath $CacheDir
-                $InternalizedPath = Join-Path $InternalizedDir $DLFileName
-                $InstallFile = $InstallFile.Replace($_.Matches.Value, $InternalizedPath)
-            }
-            
-            $InstallFile | Set-Content -Path $PkgInstallFilePath -Force
-            
-            Compress-Archive -Path ($PgkWorkDir + "\*") -DestinationPath $PkgPath -Force
-        
-        }
-
-        Get-Item -Path $PkgPath | Rename-Item -NewName { [IO.Path]::ChangeExtension($_.Name, "nupkg") }
-        
-        Remove-Item -Path $PgkWorkDir -Recurse -Force
-
-        break;
+    if (Test-Path $CacheDir) {
+      Remove-Item -Path $CacheDir -Recurse -Force
     }
 
-    "execute" {
+    New-Item -Path $CacheDir -ItemType Directory -Force | Out-Null
+    New-Item -Path $PgkWorkDir -ItemType Directory -Force | Out-Null
 
-        $ExtraArgs = ""
+    Invoke-WebRequest -Uri $PkgURL -OutFile $PkgPath
 
-        if($Vars.args) {
-            $ExtraArgs = $Vars.args
-        }
-
-        choco install $PackageName -y --acceptlicense $ExtraArgs -s "$InternalizedDir"
-
-        break;
+    if (!(Test-Path $PkgPath)) {
+      Write-Error "Failed to download package $PackageName"
     }
 
-    default {
-        Write-Host "Unknown action ($Action) on $($MyInvocation.MyCommand.Name)"
+    Expand-Archive -Path $PkgPath -DestinationPath $PgkWorkDir
+
+    $PkgInstallFilePath = Join-Path $PgkWorkDir $PkgInstallFile
+
+    if (Test-Path $PkgInstallFilePath) {
+
+      $InstallFile = Get-Content -Path $PkgInstallFilePath
+
+      $URLPattern = "(?<=['`"])(http[s]?)(:\/\/)([^\s,]+)(?<!['`"])"
+
+      $InstallFile | Select-String -AllMatches $URLPattern | ForEach-Object {
+        $DLFileName = Invoke-BlindFileDownload -Url $_.Matches.Value -FolderPath $CacheDir
+        $InternalizedPath = Join-Path $InternalizedDir $DLFileName
+        $InstallFile = $InstallFile.Replace($_.Matches.Value,$InternalizedPath)
+      }
+
+      $InstallFile | Set-Content -Path $PkgInstallFilePath -Force
+
+      Compress-Archive -Path ($PgkWorkDir + "\*") -DestinationPath $PkgPath -Force
+
     }
+
+    Get-Item -Path $PkgPath | Rename-Item -NewName { [IO.Path]::ChangeExtension($_.Name,"nupkg") }
+
+    Remove-Item -Path $PgkWorkDir -Recurse -Force
+
+    break;
+  }
+
+  "execute" {
+
+    $ExtraArgs = ""
+
+    if ($Vars.args) {
+      $ExtraArgs = $Vars.args
+    }
+
+    choco install $PackageName -y --acceptlicense $ExtraArgs -s "$InternalizedDir"
+
+    break;
+  }
+
+  default {
+    Write-Host "Unknown action ($Action) on $($MyInvocation.MyCommand.Name)"
+  }
 }

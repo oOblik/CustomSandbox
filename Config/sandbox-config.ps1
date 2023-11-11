@@ -13,12 +13,12 @@ Write-Host 'Importing Tasks...'
 $TaskCollection = New-CustomSandboxTaskCollection -Path "$CSMountPath\Tasks"
 $TaskOptions = Get-Content -Path "$CSMountPath\Cache\EnabledTasks.json" | ConvertFrom-Json
 
-$TaskCollection.Tasks = $TaskCollection.Tasks | Where-Object {$_.ID -in $TaskOptions}
+$TaskCollection.Tasks = $TaskCollection.Tasks | Where-Object { $_.ID -in $TaskOptions }
 
 
-$PreConfigTasks = $TaskCollection.Tasks | Where-Object {$_.Type -eq 'preconfig'}
-$PostConfigTasks = $TaskCollection.Tasks | Where-Object {$_.Type -eq 'postconfig'}
-$ConfigTasks = $TaskCollection.Tasks | Where-Object {$_.Type -ne 'preconfig' -and $_.Type -ne 'postconfig'}
+$PreConfigTasks = $TaskCollection.Tasks | Where-Object { $_.Type -eq 'preconfig' }
+$PostConfigTasks = $TaskCollection.Tasks | Where-Object { $_.Type -eq 'postconfig' }
+$ConfigTasks = $TaskCollection.Tasks | Where-Object { $_.Type -ne 'preconfig' -and $_.Type -ne 'postconfig' }
 
 #Set limited GUI for configuration mode
 Write-Host 'Setting Initial Wallpaper...'

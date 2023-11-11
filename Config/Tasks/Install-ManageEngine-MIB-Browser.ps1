@@ -1,10 +1,10 @@
 param(
-    [Parameter()]
-    [string]$Action,
-    [Parameter()]
-    [bool]$ForceCache,
-    [Parameter()]
-    [object]$Vars
+  [Parameter()]
+  [string]$Action,
+  [Parameter()]
+  [bool]$ForceCache,
+  [Parameter()]
+  [object]$Vars
 )
 
 $OutPath = "$PSScriptRoot\..\Cache\ManageEngine_MibBrowser_64bit.exe"
@@ -49,29 +49,29 @@ bOpt2=1
 
 '@
 
-switch($Action) {
-    "cache" {
-        if(!$ForceCache -and (Test-Path $OutPath)) { break; }
+switch ($Action) {
+  "cache" {
+    if (!$ForceCache -and (Test-Path $OutPath)) { break; }
 
-        $DownloadURL = "https://download.manageengine.com/products/mibbrowser-free-tool/9229779/ManageEngine_MibBrowser_FreeTool_64bit.exe"
-        Invoke-WebRequest -Uri $DownloadURL -OutFile $OutPath
+    $DownloadURL = "https://download.manageengine.com/products/mibbrowser-free-tool/9229779/ManageEngine_MibBrowser_FreeTool_64bit.exe"
+    Invoke-WebRequest -Uri $DownloadURL -OutFile $OutPath
 
-        break;
+    break;
+  }
+
+  "execute" {
+    if (Test-Path $OutPath) {
+      Copy-Item $OutPath -Destination $RunPath | Out-Null
+      Set-Content -Path $ConfigPath -Value $SilentConfigFile -Force
+      Start-Process -FilePath $RunPath -ArgumentList "/s /f1`"$ConfigPath`"" -WindowStyle Hidden -Wait
+      Remove-Item -Path "$Env:PUBLIC\Desktop\ManageEngine*.lnk" -Force | Out-Null
+    } else {
+      Write-Host "Installer not found for task $($MyInvocation.MyCommand.Name)"
     }
+    break;
+  }
 
-    "execute" {
-        if(Test-Path $OutPath) {
-            Copy-Item $OutPath -Destination $RunPath | Out-Null
-            Set-Content -Path $ConfigPath -Value $SilentConfigFile -Force
-            Start-Process -FilePath $RunPath -ArgumentList "/s /f1`"$ConfigPath`"" -WindowStyle Hidden -Wait
-            Remove-Item -Path "$Env:PUBLIC\Desktop\ManageEngine*.lnk" -Force | Out-Null
-        } else {
-            Write-Host "Installer not found for task $($MyInvocation.MyCommand.Name)"
-        }
-        break;
-    }
-
-    default {
-        Write-Host "Unknown action ($Action) on $($MyInvocation.MyCommand.Name)"
-    }
+  default {
+    Write-Host "Unknown action ($Action) on $($MyInvocation.MyCommand.Name)"
+  }
 }
