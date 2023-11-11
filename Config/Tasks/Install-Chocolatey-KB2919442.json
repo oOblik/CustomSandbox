@@ -1,0 +1,10 @@
+{
+    "id": "chocolatey-KB2919442",
+    "name": "Chocolatey - Install KB2919442",
+    "dependencies": ["chocolatey"],
+    "type": "config",
+    "script": "Install-Chocolatey-Package.ps1",
+    "vars": {
+        "packagename": "KB2919442"
+    }
+}

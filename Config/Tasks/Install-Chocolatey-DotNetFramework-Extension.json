@@ -1,0 +1,10 @@
+{
+    "id": "chocolatey-dotnetfx.extension",
+    "name": "Chocolatey - Install .NET Framework Extensions",
+    "dependencies": ["chocolatey"],
+    "type": "config",
+    "script": "Install-Chocolatey-Package.ps1",
+    "vars": {
+        "packagename": "chocolatey-dotnetfx.extension"
+    }
+}
