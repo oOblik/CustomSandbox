@@ -1,6 +1,6 @@
 {
     "id": "google-chrome",
-    "name": "Install Google Chrome (Latest)",
+    "name": "[Install] Google Chrome",
     "type": "config",
     "script": "Install-Google-Chrome.ps1"
 }

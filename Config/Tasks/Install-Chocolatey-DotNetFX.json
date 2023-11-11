@@ -1,6 +1,6 @@
 {
     "id": "chocolatey-dotnetfx",
-    "name": "Chocolatey - Install Microsoft .NET Framework",
+    "name": "[Chocolatey] Microsoft .NET Framework",
     "dependencies": ["chocolatey","chocolatey-dotnetfx.extension","chocolatey-KB2919355"],
     "type": "config",
     "script": "Install-Chocolatey-Package.ps1",

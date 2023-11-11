@@ -1,6 +1,6 @@
 {
     "id": "chocolatey",
-    "name": "Install Chocolatey",
+    "name": "[Install] Chocolatey",
     "type": "config",
     "script": "Install-Chocolatey.ps1"
 }

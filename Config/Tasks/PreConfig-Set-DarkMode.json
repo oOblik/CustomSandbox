@@ -1,6 +1,6 @@
 {
     "id": "darkmode",
-    "name": "Dark Mode",
+    "name": "[Windows Settings] Dark Mode",
     "type": "preconfig",
     "script": "PreConfig-Set-DarkMode.ps1"
 }

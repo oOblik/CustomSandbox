@@ -1,6 +1,6 @@
 {
     "id": "7-zip",
-    "name": "Install 7-Zip",
+    "name": "[Install] 7-Zip",
     "type": "config",
     "script": "Install-7-Zip.ps1"
 }

@@ -1,6 +1,6 @@
 {
     "id": "showfileextensions",
-    "name": "Show File Extensions",
+    "name": "[Windows Settings] Show File Extensions",
     "type": "preconfig",
     "script": "PreConfig-Set-ShowFileExtensions.ps1"
 }

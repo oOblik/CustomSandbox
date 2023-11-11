@@ -1,6 +1,6 @@
 {
     "id": "windows-terminal",
-    "name": "Install Windows Terminal (Latest)",
+    "name": "[Install] Windows Terminal",
     "type": "config",
     "script": "Install-Windows-Terminal.ps1"
 }

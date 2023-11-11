@@ -1,6 +1,6 @@
 {
     "id": "microsoft-vscode",
-    "name": "Install Microsoft VSCode (Latest)",
+    "name": "[Install] Microsoft VSCode",
     "type": "config",
     "script": "Install-Microsoft-VSCode.ps1"
 }

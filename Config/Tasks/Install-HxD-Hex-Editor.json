@@ -1,6 +1,6 @@
 {
     "id": "hxd-hex-editor",
-    "name": "Install HxD Hex Editor (Latest)",
+    "name": "[Install] HxD Hex Editor",
     "type": "config",
     "script": "Install-HxD-Hex-Editor.ps1"
 }

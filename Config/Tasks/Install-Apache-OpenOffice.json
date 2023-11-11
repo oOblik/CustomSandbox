@@ -1,6 +1,6 @@
 {
     "id": "apache-openoffice",
-    "name": "Install Apache OpenOffice (Latest)",
+    "name": "[Install] Apache OpenOffice",
     "type": "config",
     "script": "Install-Apache-OpenOffice.ps1"
 }

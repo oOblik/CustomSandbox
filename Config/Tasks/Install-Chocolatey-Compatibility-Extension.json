@@ -1,6 +1,6 @@
 {
     "id": "chocolatey-compatibility.extension",
-    "name": "Chocolatey - Install Compatibility Extensions",
+    "name": "[Chocolatey] Compatibility Extensions",
     "dependencies": ["chocolatey"],
     "type": "config",
     "script": "Install-Chocolatey-Package.ps1",

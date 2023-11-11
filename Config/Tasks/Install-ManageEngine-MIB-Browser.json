@@ -1,6 +1,6 @@
 {
     "id": "manageengine-mib-browser",
-    "name": "Install ManageEngine MIB Browser (Latest)",
+    "name": "[Install] ManageEngine MIB Browser",
     "dependencies": ["adoptopen-java-jrelatestx64"],
     "type": "config",
     "script": "Install-ManageEngine-MIB-Browser.ps1"

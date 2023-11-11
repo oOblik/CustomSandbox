@@ -1,6 +1,6 @@
 {
     "id": "chocolatey-KB2919355",
-    "name": "Chocolatey - Install KB2919355",
+    "name": "[Chocolatey] KB2919355",
     "dependencies": ["chocolatey","chocolatey-KB2919442"],
     "type": "config",
     "script": "Install-Chocolatey-Package.ps1",

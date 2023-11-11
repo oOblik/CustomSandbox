@@ -1,6 +1,0 @@
-{
-    "id": "bginfo",
-    "name": "BGInfo",
-    "type": "postconfig",
-    "script": "PostConfig-Set-BGInfo.ps1"
-}

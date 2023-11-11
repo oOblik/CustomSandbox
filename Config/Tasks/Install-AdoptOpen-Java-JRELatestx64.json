@@ -1,6 +1,6 @@
 {
     "id": "adoptopen-java-jrelatestx64",
-    "name": "Install AdoptOpen Java JRE Latest (x64)",
+    "name": "[Install] AdoptOpen Java JRE Latest (x64)",
     "type": "config",
     "script": "Install-AdoptOpen-Java.ps1",
     "vars": {

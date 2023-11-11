@@ -1,0 +1,6 @@
+{
+    "id": "bginfo",
+    "name": "[Install] BGInfo",
+    "type": "postconfig",
+    "script": "PostConfig-Install-BGInfo.ps1"
+}

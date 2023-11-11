@@ -1,6 +1,6 @@
 {
     "id": "chocolatey-sharex",
-    "name": "Chocolatey - Install ShareX",
+    "name": "[Chocolatey] ShareX",
     "dependencies": ["chocolatey","chocolatey-dotnetfx"],
     "type": "config",
     "script": "Install-Chocolatey-Package.ps1",
