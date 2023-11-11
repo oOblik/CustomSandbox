@@ -5,11 +5,10 @@ class CustomSandboxTask{
   [string[]]$Dependencies = @()
   [string[]]$Requirements = @()
   [string]$Script = ""
-  [object[]]$Vars = @{}
-  [int]$ProcessOrder
+  [object]$Vars = @{}
 
-  CustomSandboxTask ([string]$ID,[string]$Name,[string]$Type,[string[]]$Dependencies,[string[]]$Requirements,[string]$Script,[object]$Vars,[int]$ProcessOrder) {
-    $this.Init($ID,$Name,$Type,$Dependencies,$Requirements,$Script,$Vars,$ProcessOrder);
+  CustomSandboxTask ([string]$ID,[string]$Name,[string]$Type,[string[]]$Dependencies,[string[]]$Requirements,[string]$Script,[object]$Vars) {
+    $this.Init($ID,$Name,$Type,$Dependencies,$Requirements,$Script,$Vars);
   }
 
   hidden Init (
@@ -19,8 +18,7 @@ class CustomSandboxTask{
     [string[]]$Dependencies,
     [string[]]$Requirements,
     [string]$Script,
-    [object]$Vars,
-    [int]$ProcessOrder
+    [object]$Vars
   ) {
     $this.ID = $ID
     $this.Name = $Name
@@ -29,7 +27,6 @@ class CustomSandboxTask{
     $this.Requirements = $Requirements
     $this.Script = $Script
     $this.Vars = $Vars
-    $this.ProcessOrder = $ProcessOrder
   }
 
   [void] ExecuteAction (
@@ -40,6 +37,20 @@ class CustomSandboxTask{
   }
 }
 
+function New-CustomSandboxTask {
+  param(
+    [ValidateNotNullOrEmpty()] [string]$ID,
+    [ValidateNotNullOrEmpty()] [string]$Name,
+    [ValidateSet("preconfig","postconfig","config")] $Type = "config",
+    [string[]]$Dependencies = @(),
+    [string[]]$Requirements = @(),
+    [string]$Script,
+    [object]$Vars = @{}
+  )
+
+  return [CustomSandboxTask]::new($ID,$Name,$Type,$Dependencies,$Requirements,$Script,$Vars)
+}
+
 class CustomSandboxTaskCollection{
   [CustomSandboxTask[]]$Tasks
 
@@ -47,7 +58,6 @@ class CustomSandboxTaskCollection{
 
   [void] Add ([CustomSandboxTask]$Task) {
     $this.Tasks += $Task
-    $this.CalcProcessOrder()
   }
 
   [void] LoadFromDirectory ([string]$Path) {
@@ -59,26 +69,29 @@ class CustomSandboxTaskCollection{
     $TaskFiles = Get-ChildItem -Path $Path -Include "*.json" -File -Recurse
 
     foreach ($TaskFile in $TaskFiles) {
-      $TaskJson = Get-Content -Path $TaskFile.FullName | ConvertFrom-Json
-      $ScriptPath = Join-Path $TaskFile.Directory $TaskJson.Script
+      try {
+        $TaskJson = (Get-Content -Path $TaskFile.FullName -Raw) | ConvertFrom-Json
+        $ScriptPath = Join-Path $TaskFile.Directory $TaskJson.script
 
-      if (!(Test-Path $ScriptPath)) {
-        Write-Error "Script File $ScriptPath referenced in $TaskFile not found."
-        break;
+        if (!(Test-Path $ScriptPath)) {
+          Write-Error "Script File $ScriptPath referenced in $TaskFile not found."
+          break;
+        }
+
+        $NewTask = New-CustomSandboxTask `
+          -ID $TaskJson.ID `
+          -Name $TaskJson.Name `
+          -Type $TaskJson.Type `
+          -Dependencies $TaskJson.Dependencies `
+          -Requirements $TaskJson.Requirements `
+          -Script $ScriptPath `
+          -Vars $TaskJson.Vars
+
+        $this.Add($NewTask)
+
+      } catch {
+        Write-Error "Failed to load task file $($TaskFile.FullName) $_"
       }
-
-      $this.Add(
-        [CustomSandboxTask]::new(
-          $TaskJson.ID,
-          $TaskJson.Name,
-          $TaskJson.Type,
-          $TaskJson.Dependencies,
-          $TaskJson.Requirements,
-          $ScriptPath,
-          $TaskJson.Vars,
-          0
-        )
-      )
     }
 
     $this.CalcProcessOrder()
@@ -86,34 +99,21 @@ class CustomSandboxTaskCollection{
 
   [void] CalcProcessOrder () {
 
+    $DepOrder = @{}
+
     $this.Tasks | ForEach-Object {
-      $_.ProcessOrder = 0
+      if($_.Dependencies) {
+          if(-not $DepOrder.ContainsKey($_.ID)) {
+              $DepOrder.add($_.ID, $_.Dependencies)
+          }
+      }
     }
 
-    $DepPasses = 0
+    if($DepOrder.Keys.Count -gt 0) {
+        $DependencyOrder = Get-TopologicalSort $DepOrder
+        $this.Tasks = Sort-ObjectWithCustomList -InputObject $this.Tasks -Property ID -CustomList $DependencyOrder
+    }
 
-    do {
-      $Continue = $true
-
-      for ($i = 0; $i -lt $this.Tasks.Count; $i++) {
-
-        foreach ($Dep in $this.Tasks[$i].Dependencies) {
-
-          $DepTask = $this.Tasks | Where-Object { $_.ID -eq $Dep }
-
-          if ($DepTask.ProcessOrder -ge $this.Tasks[$i].ProcessOrder) {
-            $DepTask.ProcessOrder = $this.Tasks[$i].ProcessOrder - 1
-            $Continue = $false
-          }
-
-        }
-
-      }
-
-      $DepPasses++
-    } while ($Continue -and $DepPasses -lt 1000)
-
-    $this.Tasks = $this.Tasks | Sort-Object -Property ProcessOrder
   }
 }
 
@@ -125,20 +125,5 @@ function New-CustomSandboxTaskCollection {
   $TaskCollection = [CustomSandboxTaskCollection]::new()
   $TaskCollection.LoadFromDirectory($Path)
 
-  return $TaskCollection | Sort-Object -Property ProcessOrder
-}
-
-function New-CustomSandboxTask {
-  param(
-    [ValidateNotNullOrEmpty()] [string]$ID,
-    [ValidateNotNullOrEmpty()] [string]$Name,
-    [ValidateSet("preconfig","postconfig","config")] $Type = "config",
-    [string[]]$Dependencies = @(),
-    [string[]]$Requirements = @(),
-    [string]$Script,
-    [object[]]$Vars = @{},
-    [int]$ProcessOrder = 0
-  )
-
-  return [CustomSandboxTask]::new($ID,$Name,$Type,$Dependencies,$Requirements,$Script,$Vars,$ProcessOrder)
+  return $TaskCollection
 }
