@@ -28,7 +28,11 @@ Write custom tasks to install software or configure Windows in the sandbox immed
   - AdoptOpen Java JRE
   - Apache OpenOffice
   - Chocolatey 
-    - Google Chrome package is included as an example task.
+    - Compatibility Extensions
+    - Core Extensions
+    - Google Chrome
+    - Microsoft .NET Framework
+    - ShareX
     - [Experimental] Installs are cached/internalized and can be done with networking disabled.
   - Google Chrome
   - HxD Hex Editor
