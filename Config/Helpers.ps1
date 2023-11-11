@@ -1,6 +1,3 @@
-$CSMountPath = "$Env:SYSTEMDRIVE\Config"
-$CSCachePath = "$Env:SYSTEMDRIVE\Config\Cache"
-
 function Get-FriendlySize {
   param([int]$MBytes)
 

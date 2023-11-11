@@ -22,8 +22,9 @@ if (-not $Vars.feature_version) {
   return
 }
 
-$OutPath = "$PSScriptRoot\..\Cache\OpenJDK-$($Vars.image_type)_win$($Vars.arch)_$($Vars.feature_version).msi"
-$RunPath = "C:\Windows\TEMP\OpenJDK-$($Vars.image_type)_win$($Vars.arch)_$($Vars.feature_version).msi"
+$InstallFile = "OpenJDK-$($Vars.image_type)_win$($Vars.arch)_$($Vars.feature_version).msi"
+$OutPath = Join-Path $CSCachePath $InstallFile
+$RunPath = Join-Path $Env:TEMP $InstallFile
 
 switch ($Action) {
   "cache" {

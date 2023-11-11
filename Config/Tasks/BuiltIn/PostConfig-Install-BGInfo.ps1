@@ -7,8 +7,8 @@ param(
   [object]$Vars
 )
 
-$OutArchivePath = "$PSScriptRoot/../Cache/BGInfo.zip"
-$OutPath = "$PSScriptRoot/../Cache/BGInfo.exe"
+$OutArchivePath = Join-Path $CSCachePath "BGInfo.zip"
+$OutPath = Join-Path $CSCachePath "BGInfo.exe"
 
 switch ($Action) {
   "cache" {
@@ -18,7 +18,7 @@ switch ($Action) {
     Invoke-WebRequest -Uri $DownloadURL -OutFile $OutArchivePath
 
     if (Test-Path $OutArchivePath) {
-      Expand-Archive -LiteralPath $OutArchivePath -DestinationPath "$PSScriptRoot/../Cache/" -Force
+      Expand-Archive -LiteralPath $OutArchivePath -DestinationPath $CSCachePath -Force
     }
 
     break;
@@ -26,7 +26,7 @@ switch ($Action) {
 
   "execute" {
     if (Test-Path $OutPath) {
-      Start-Process -FilePath "C:\Config\Cache\Bginfo64.exe" -ArgumentList "C:\Config\Assets\BGInfo.bgi /timer:0 /nolicprompt /silent" -WindowStyle Hidden
+      Start-Process -FilePath $OutPath -ArgumentList "$CSMountPath\Assets\BGInfo.bgi /timer:0 /nolicprompt /silent" -WindowStyle Hidden
     } else {
       Write-Host "Utility not found for task $($MyInvocation.MyCommand.Name)"
     }

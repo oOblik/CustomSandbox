@@ -7,7 +7,7 @@ param(
   [object]$Vars
 )
 
-$OutPath = "$PSScriptRoot\..\Cache\ApacheOpenOfficeInstaller.exe"
+$OutPath = "$CSCachePath\ApacheOpenOfficeInstaller.exe"
 
 switch ($Action) {
   "cache" {

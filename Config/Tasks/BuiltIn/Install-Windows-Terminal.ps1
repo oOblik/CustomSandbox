@@ -7,9 +7,9 @@ param(
   [object]$Vars
 )
 
-$OutPath = "$PSScriptRoot/../Cache/Microsoft.WindowsTerminal.msixbundle"
-$VCRedistOutPath = "$PSScriptRoot/../Cache/VC_redist.x64.exe"
-$UiXamlZipOutPath = "$PSScriptRoot/../Cache/Microsoft.UI.XAML.2.8.5.zip"
+$OutPath = Join-Path $CSCachePath "Microsoft.WindowsTerminal.msixbundle"
+$VCRedistOutPath = Join-Path $CSCachePath "VC_redist.x64.exe"
+$UiXamlZipOutPath = Join-Path $CSCachePath "Microsoft.UI.XAML.2.8.5.zip"
 
 switch ($Action) {
   "cache" {

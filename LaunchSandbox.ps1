@@ -3,16 +3,23 @@
 $ErrorActionPreference = 'Continue'
 $ProgressPreference = 'SilentlyContinue'
 
-Start-Transcript -Path "C:\Windows\Temp\CustomSandbox.txt"
+Start-Transcript -Path "$PSScriptRoot\CustomSandbox.log"
 
 . "$PSScriptRoot\Config\Tasks.ps1"
 . "$PSScriptRoot\Config\Menu.ps1"
 . "$PSScriptRoot\Config\Helpers.ps1"
 
+$LauncherRootPath = $PSScriptRoot
+$LauncherMountPath = Join-Path $LauncherRootPath "Config"
+$LauncherCachePath = Join-Path $LauncherMountPath "Cache"
+
+$CSMountPath = "C:\Config"
+$CSCachePath = $LauncherCachePath
+
 $Config = @{}
 $Config.Tasks = @()
 
-$ConfigPath = "$PSScriptRoot\config.json"
+$ConfigPath = "$LauncherRootPath\config.json"
 if (Test-Path $ConfigPath) {
   try {
     $Config = Get-Content -Path $ConfigPath | ConvertFrom-Json
@@ -47,18 +54,16 @@ $WSConfig = @"
 
 $XML = [xml]$WSConfig
 
-$CachePath = "$PSScriptRoot\Config\Cache"
-
-if (!(Test-Path $CachePath)) {
-  New-Item -Path $CachePath -ItemType Directory -Force | Out-Null
+if (!(Test-Path $LauncherCachePath)) {
+  New-Item -Path $LauncherCachePath -ItemType Directory -Force | Out-Null
 }
 
-$UtilPath = "$PSScriptRoot\Config\Utilities"
+$UtilPath = Join-Path $LauncherMountPath "Utilities"
 if (!(Test-Path $UtilPath)) {
   New-Item -Path $UtilPath -ItemType Directory -Force | Out-Null
 }
 
-$CacheFiles = Get-ChildItem -Path $CachePath -File -Recurse
+$CacheFiles = Get-ChildItem -Path $LauncherCachePath -File -Recurse
 $CacheSize = Get-FriendlySize -MBytes (($CacheFiles | Measure-Object Length -Sum).Sum / 1024 / 1024)
 
 
@@ -167,7 +172,7 @@ if ($SelectedOptions -contains 'CustomRam') {
 
 if ($SelectedOptions -contains 'ClearCache') {
   Write-Host "Clearing cache..."
-  Get-ChildItem -Path $CachePath | Remove-Item -Recurse -Force
+  Get-ChildItem -Path $LauncherCachePath | Remove-Item -Recurse -Force
 }
 
 if ($SelectedOptions -contains 'UpdateCache') {
@@ -179,8 +184,8 @@ if ($SelectedOptions -contains 'UpdateCache') {
 }
 
 
-
-$TaskCollection = New-CustomSandboxTaskCollection -Path "$PSScriptRoot\Config\Tasks"
+$TaskPath = Join-Path $LauncherMountPath "Tasks"
+$TaskCollection = New-CustomSandboxTaskCollection -Path $TaskPath
 
 $TaskHeader = "Choose tasks to run:"
 $TaskItems = @()
@@ -207,12 +212,11 @@ $TaskCollection.Tasks | Where-Object { $_.ID -in $AllTasks } | ForEach-Object {
 }
 
 Write-Host "Writing Task Configuration..."
-$SelectedTasks | ConvertTo-Json | Set-Content -Path "$CachePath\EnabledTasks.json" -Encoding UTF8
+$SelectedTasks | ConvertTo-Json | Set-Content -Path "$LauncherCachePath\EnabledTasks.json" -Encoding UTF8
 
-Write-Host "Getting Sandbox Configuration..."
-$OutConfig = Join-Path $env:TEMP "CustomSandbox.wsb"
+Write-Host "Getting CustomSandbox Configuration..."
 
-$XML.Configuration.MappedFolders.MappedFolder.HostFolder = [string](Join-Path $PSScriptRoot "Config")
+$XML.Configuration.MappedFolders.MappedFolder.HostFolder = [string]$LauncherMountPath
 
 if ($SelectedOptions -contains 'ProtectedMode') {
   $XML.Configuration.ProtectedClient = "Enable"
@@ -263,20 +267,21 @@ if ($SelectedOptions -contains 'DisableVideoInput') {
   $Config | Add-Member -NotePropertyName 'DisableVideoInput' -NotePropertyValue $False -Force
 }
 
-Write-Host "Writing Sandbox Configuration..."
-$XML.Save($OutConfig)
-
 if ($SelectedOptions -contains 'SaveConfig') {
-  Write-Host "Writing Configuration to $ConfigPath..."
+  Write-Host "Writing CustomSandbox Configuration to $ConfigPath..."
   $Config | Add-Member -NotePropertyName 'SaveConfig' -NotePropertyValue $True -Force
   $Config | ConvertTo-Json | Set-Content -Path $ConfigPath -Encoding UTF8
 } else {
   $Config | Add-Member -NotePropertyName 'SaveConfig' -NotePropertyValue $False -Force
 }
 
+Write-Host "Writing Windows Sandbox Configuration..."
+$WinSandboxConfig = Join-Path $LauncherCachePath "CustomSandbox.wsb"
+$XML.Save($WinSandboxConfig)
+
 Pause
 
-Write-Host "Launching Sandbox..."
-Invoke-Item $OutConfig
+Write-Host "Launching Windows Sandbox..."
+Invoke-Item $WinSandboxConfig
 
 Stop-Transcript

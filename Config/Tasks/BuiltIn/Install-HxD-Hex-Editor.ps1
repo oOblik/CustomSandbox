@@ -7,8 +7,8 @@ param(
   [object]$Vars
 )
 
-$OutArchivePath = "$PSScriptRoot/../Cache/BGInfo.zip"
-$OutPath = "$PSScriptRoot\..\Cache\HxDSetup.exe"
+$OutArchivePath = "$CSCachePath\BGInfo.zip"
+$OutPath = "$CSCachePath\HxDSetup.exe"
 
 switch ($Action) {
   "cache" {
@@ -18,7 +18,7 @@ switch ($Action) {
     Invoke-WebRequest -Uri $DownloadURL -OutFile $OutArchivePath
 
     if (Test-Path $OutArchivePath) {
-      Expand-Archive -LiteralPath $OutArchivePath -DestinationPath "$PSScriptRoot/../Cache/" -Force
+      Expand-Archive -LiteralPath $OutArchivePath -DestinationPath $CSCachePath -Force
     }
 
     break;

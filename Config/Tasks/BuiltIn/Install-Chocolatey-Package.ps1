@@ -12,15 +12,15 @@ $PackageName = $Vars.packagename
 $APIBaseURL = "https://chocolatey.org/api/v2"
 $PkgURL = "$APIBaseURL/package/$PackageName"
 
-$CacheDir = Join-Path "$PSScriptRoot\..\Cache\Chocolatey" $PackageName
-$InternalizedDir = Join-Path "$CSCachePath\Chocolatey" $PackageName
+$CacheDir = Join-Path "$CSCachePath\Chocolatey" $PackageName
 
 $PkgPath = Join-Path $CacheDir "$PackageName.zip"
 $CheckPath = Join-Path $CacheDir "$PackageName.nupkg"
 
 $PgkWorkDir = Join-Path $CacheDir "package"
-$PkgInstallFile = "tools/chocolateyInstall.ps1"
+$PkgInstallFile = "tools\chocolateyInstall.ps1"
 
+$InternalizedDir = Join-Path "$CSMountPath\Cache\Chocolatey" $PackageName
 
 switch ($Action) {
   "cache" {

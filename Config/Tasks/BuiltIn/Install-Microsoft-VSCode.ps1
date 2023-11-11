@@ -7,7 +7,7 @@ param(
   [object]$Vars
 )
 
-$OutPath = "$PSScriptRoot\..\Cache\VSCodeUserSetup-x64-latest.exe"
+$OutPath = "$CSCachePath\VSCodeUserSetup-x64-latest.exe"
 
 switch ($Action) {
   "cache" {

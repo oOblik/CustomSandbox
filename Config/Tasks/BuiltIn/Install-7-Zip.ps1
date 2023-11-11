@@ -7,15 +7,14 @@ param(
   [object]$Vars
 )
 
-$OutPath = "$PSScriptRoot\..\Cache\IDAFreeInstaller.exe"
+$OutPath = "$CSCachePath\7ZipInstaller.exe"
 
 switch ($Action) {
   "cache" {
     if (!$ForceCache -and (Test-Path $OutPath)) { break; }
 
-    $BaseURL = "https://hex-rays.com/ida-free/"
-
-    $WebResponse = Invoke-WebRequest $BaseURL
+    $BaseURL = "https://www.7-zip.org"
+    $WebResponse = Invoke-WebRequest "$BaseURL/download.html"
 
     if ($WebResponse.Content) {
       $HTML = $WebResponse.Content
@@ -28,17 +27,20 @@ switch ($Action) {
         $comHTML.write([System.Text.Encoding]::Unicode.GetBytes($HTML))
       }
 
-      $DownloadPath = ($comHtml.all.tags('a') | Where-Object { $_.textContent -like '*IDA Free for Windows*' } | Select-Object -First 1).href
+      $DownloadPath = ($comHtml.all.tags('a') | Where-Object { $_.pathName -like 'a/7z*-x64.exe' } | Select-Object -First 1).pathName
+
+      if ($DownloadPath) {
+        $DownloadURL = $BaseURL + "/" + $DownloadPath
+      }
     }
 
-    Invoke-WebRequest -Uri $DownloadPath -OutFile $OutPath
+    Invoke-WebRequest -Uri $DownloadURL -OutFile $OutPath
     break;
   }
 
   "execute" {
     if (Test-Path $OutPath) {
-      Start-Process -FilePath "$OutPath" -ArgumentList "--unattendedmodeui minimal --mode unattended --installpassword freeware" -WindowStyle Hidden -Wait
-      Remove-Item -Path "$Env:PUBLIC\Desktop\IDA Free*.lnk" -Force | Out-Null
+      Start-Process -FilePath "$OutPath" -ArgumentList "/S" -WindowStyle Hidden -Wait
     } else {
       Write-Host "Installer not found for task $($MyInvocation.MyCommand.Name)"
     }

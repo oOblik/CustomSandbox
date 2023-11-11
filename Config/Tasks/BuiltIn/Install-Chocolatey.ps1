@@ -7,7 +7,7 @@ param(
   [object]$Vars
 )
 
-$OutPath = "$PSScriptRoot\..\Cache\Chocolatey.nupkg"
+$OutPath = "$CSCachePath\Chocolatey.nupkg"
 
 switch ($Action) {
   "cache" {

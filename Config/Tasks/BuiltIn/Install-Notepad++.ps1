@@ -7,9 +7,9 @@ param(
   [object]$Vars
 )
 
-$OutPath = "$PSScriptRoot\..\Cache\npp.latest.Installer.x64.exe"
-$ThemeOutPath = "$PSScriptRoot\..\Cache\VS2015-Dark.xml"
-$ConfigPath = "$PSScriptRoot\..\Assets\NppConfig.xml"
+$OutPath = "$CSCachePath\npp.latest.Installer.x64.exe"
+$ThemeOutPath = "$CSCachePath\VS2015-Dark.xml"
+$ConfigPath = "$CSMountPath\Assets\NppConfig.xml"
 
 switch ($Action) {
   "cache" {

@@ -7,9 +7,9 @@ param(
   [object]$Vars
 )
 
-$OutPath = "$PSScriptRoot\..\Cache\ManageEngine_MibBrowser_64bit.exe"
-$RunPath = "C:\Windows\TEMP\ManageEngine_MibBrowser_64bit.exe"
-$ConfigPath = "C:\Windows\Temp\Setup.iss"
+$OutPath = Join-Path $CSCachePath "ManageEngine_MibBrowser_64bit.exe"
+$RunPath = Join-Path $Env:TEMP "ManageEngine_MibBrowser_64bit.exe"
+$ConfigPath = Join-Path $Env:TEMP "Setup.iss"
 
 $SilentConfigFile = @'
 [InstallShield Silent]

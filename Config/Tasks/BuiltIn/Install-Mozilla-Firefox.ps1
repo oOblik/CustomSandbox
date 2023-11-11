@@ -7,24 +7,24 @@ param(
   [object]$Vars
 )
 
-$OutPath = "$PSScriptRoot\..\Cache\GoogleChromeInstaller.msi"
-$RunPath = "C:\Windows\TEMP\GoogleChromeInstaller.msi"
+$OutPath = Join-Path $CSCachePath "MozillaFirefoxInstaller.msi"
+$RunPath = Join-Path $Env:TEMP "MozillaFirefoxInstaller.msi"
 
 switch ($Action) {
   "cache" {
     if (!$ForceCache -and (Test-Path $OutPath)) { break; }
 
-    $DownloadURL = "https://dl.google.com/tag/s/dl/chrome/install/googlechromestandaloneenterprise64.msi"
+    $DownloadURL = "https://download.mozilla.org/?product=firefox-msi-latest-ssl&os=win64&lang=en-US"
 
     Invoke-WebRequest -Uri $DownloadURL -OutFile $OutPath
+
     break;
   }
 
   "execute" {
     if (Test-Path $OutPath) {
       Copy-Item $OutPath -Destination $RunPath | Out-Null
-      Start-Process -FilePath "Msiexec.exe" -ArgumentList "/I `"$RunPath`" /quiet /norestart" -WindowStyle Hidden -Wait
-      Remove-Item -Path "$Env:PUBLIC\Desktop\Google Chrome.lnk" -Force | Out-Null
+      Start-Process -FilePath "Msiexec.exe" -ArgumentList "/I `"$RunPath`" PREVENT_REBOOT_REQUIRED=true DESKTOP_SHORTCUT=false TASKBAR_SHORTCUT=true /qn" -WindowStyle Hidden -Wait
     } else {
       Write-Host "Installer not found for task $($MyInvocation.MyCommand.Name)"
     }
