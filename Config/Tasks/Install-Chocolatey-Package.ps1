@@ -70,7 +70,13 @@ switch($Action) {
 
     "execute" {
 
-        choco install $PackageName -y --acceptlicense -s "$InternalizedDir"
+        $ExtraArgs = ""
+
+        if($Vars.args) {
+            $ExtraArgs = $Vars.args
+        }
+
+        choco install $PackageName -y --acceptlicense $ExtraArgs -s "$InternalizedDir"
 
         break;
     }
