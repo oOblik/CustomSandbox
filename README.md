@@ -75,7 +75,7 @@ Set-ExecutionPolicy Unrestricted -Scope CurrentUser -Force
 Get-ChildItem -Recurse *.ps1 | Unblock-File
 
 # Launch
-.\LaunchSandbox.ps1
+.\CustomSandbox.ps1
 ```
 
 ## 📸 Screenshots
