@@ -11,10 +11,10 @@ Start-Transcript -Path "$Env:TEMP\CustomSandboxConfig.txt"
 
 Write-Host 'Importing Tasks...'
 $TaskCollection = New-CustomSandboxTaskCollection -Path "$CSMountPath\Tasks"
-$TaskOptions = Get-Content -Path "$CSMountPath\Cache\EnabledTasks.json" | ConvertFrom-Json
+$TaskOptions = Get-Content -Path "$CSMountPath\Cache\EnabledTasks.json" -Raw | ConvertFrom-Json
 
-$TaskCollection.Tasks = $TaskCollection.Tasks | Where-Object { $_.ID -in $TaskOptions }
-
+$AllTasks = $TaskCollection.GetTasksWithDepFromList($TaskOptions)
+$TaskCollection.Tasks = $TaskCollection.Tasks | Where-Object { $_.ID -in $AllTasks }
 
 $PreConfigTasks = $TaskCollection.Tasks | Where-Object { $_.Type -eq 'preconfig' }
 $PostConfigTasks = $TaskCollection.Tasks | Where-Object { $_.Type -eq 'postconfig' }

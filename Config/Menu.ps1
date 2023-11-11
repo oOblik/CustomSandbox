@@ -224,7 +224,7 @@ class Menu{
     if ($this.Mode -eq 'Multi') {
       $this.SelectedItems = @()
       foreach ($Item in $this.Items) {
-        if ($Item.Selected -or $Item.Value -in $this.DependencyList) {
+        if ($Item.Selected) {
           $this.SelectedItems += $Item.Value
         }
       }

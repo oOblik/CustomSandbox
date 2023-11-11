@@ -115,6 +115,31 @@ class CustomSandboxTaskCollection{
     }
 
   }
+
+  [string[]] GetTasksWithDepFromList ([string[]]$List) {
+    $AllTasks = @()
+    
+    $this.Tasks | Where-Object { $_.ID -in $List } | ForEach-Object {
+      if($_.ID -notin $AllTasks) {
+        $AllTasks += $_.ID
+      }
+    }
+
+    do {
+      $StartCount = $AllTasks.Count
+      $this.Tasks | Where-Object { $_.ID -in $AllTasks } | ForEach-Object {
+        if($_.Dependencies) {
+          $_.Dependencies | ForEach-Object {
+            if($_ -notin $AllTasks) {
+              $AllTasks += $_
+            }
+          }
+        }
+      }
+    } while($AllTasks.Count -gt $StartCount)
+
+    return $AllTasks
+  } 
 }
 
 function New-CustomSandboxTaskCollection {

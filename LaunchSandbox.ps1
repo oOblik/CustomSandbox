@@ -10,6 +10,7 @@ Start-Transcript -Path "C:\Windows\Temp\CustomSandbox.txt"
 . "$PSScriptRoot\Config\Helpers.ps1"
 
 $Config = @{}
+$Config.Tasks = @()
 
 $ConfigPath = "$PSScriptRoot\config.json"
 if (Test-Path $ConfigPath) {
@@ -185,17 +186,9 @@ $TaskHeader = "Choose tasks to run:"
 $TaskItems = @()
 
 foreach ($Task in $TaskCollection.Tasks) {
-
-  $Order = 1
-  switch ($Task.Type) {
-    { $_ -eq 'preconfig' } { $Order = 0 }
-    { $_ -eq 'postconfig' } { $Order = 2 }
-  }
-
   $TaskItems += Get-MenuItem `
      -Label $Task.Name `
      -Value $Task.ID `
-     -Order $Order `
      -Depends $Task.Dependencies `
      -Selected:($Config.Tasks -contains $Task.ID)
 }
@@ -204,16 +197,16 @@ $SelectedTasks = Get-MenuSelection -Header $TaskHeader -Items $TaskItems -Mode M
 
 Clear-Host
 
-$Config.Tasks = @()
 $Config.Tasks = $SelectedTasks
 
-$TaskCollection.Tasks | Where-Object { $_.ID -in $SelectedTasks } | ForEach-Object {
+$AllTasks = $TaskCollection.GetTasksWithDepFromList($SelectedTasks)
+
+$TaskCollection.Tasks | Where-Object { $_.ID -in $AllTasks } | ForEach-Object {
   Write-Host "Running cache action for task $($_.Name)..."
   $_.ExecuteAction("cache",$ForceCache)
 }
 
 Write-Host "Writing Task Configuration..."
-$SelectedTasks | Export-Csv -Path "$CachePath\EnabledTasks.csv" -NoTypeInformation -Force
 $SelectedTasks | ConvertTo-Json | Set-Content -Path "$CachePath\EnabledTasks.json" -Encoding UTF8
 
 Write-Host "Getting Sandbox Configuration..."
