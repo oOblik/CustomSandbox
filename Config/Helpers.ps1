@@ -6,7 +6,7 @@ function Get-FriendlySize {
 
     $bytes = $MBytes*1024*1024
 
-    $result = "{0} B " -f $bytes
+    $result = "{0} B" -f $bytes
 
     switch($bytes) {
         { $_ -ge 1tb } { 
