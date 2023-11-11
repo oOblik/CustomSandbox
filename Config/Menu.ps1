@@ -44,6 +44,7 @@ class Menu{
   hidden [object[]]$SelectedItems = @()
   hidden [string[]]$DependencyList = @()
   hidden [int]$CurrentIndex = 0
+  hidden [bool]$SelectionChanged = $True
   hidden [int]$maxHeight = 10
 
   Menu ([string]$Header,[MenuItem[]]$Items,[string]$Mode) {
@@ -98,6 +99,7 @@ class Menu{
           if (-not ($CurrentItem.ReadOnly -or $CurrentItem.Value -in $this.DependencyList)) {
             $CurrentItem.Selected = !$CurrentItem.Selected;
           }
+          $this.SelectionChanged = $True
         } else {
           return $true
         }
@@ -188,11 +190,15 @@ class Menu{
       }
 
       if ($CurrentItem) {
-        $BackgroundColor = [ConsoleColor]::DarkGreen
+        $BackgroundColor = [ConsoleColor]::DarkRed
       }
 
-      if ($this.Mode -eq "Multi" -and ($ReadOnly -or $Dependency)) {
+      if ($this.Mode -eq "Multi" -and ($ReadOnly)) {
         $ForegroundColor = [ConsoleColor]::DarkGray
+      }
+
+      if ($this.Mode -eq "Multi" -and ($Dependency)) {
+        $ForegroundColor = [ConsoleColor]::DarkYellow
       }
 
       Write-Host $ItemString -ForegroundColor $ForegroundColor -BackgroundColor $BackgroundColor
@@ -269,12 +275,15 @@ class Menu{
     $Finished = $False
 
     do {
-      $this.CalcDependencies()
+      if($this.SelectionChanged) {
+        $this.CalcDependencies()
+      }
 
       Clear-Host
 
       $this.Draw()
 
+      $this.SelectionChanged = $False
       $Finished = $this.ProcessInput([Console]::ReadKey("NoEcho,IncludeKeyDown"))
     } while (-not $Finished)
 
