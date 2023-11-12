@@ -1,8 +1,18 @@
 #Requires -Version 5
 
+[CmdletBinding()]
+param(
+  [Parameter(Mandatory=$False)][switch]$ForceWSInstall,
+  [Parameter(Mandatory=$False)][switch]$SkipCompatCheck
+)
+
 $ErrorActionPreference = 'Continue'
 $ProgressPreference = 'SilentlyContinue'
 
+$AppName = "CustomSandbox"
+$AppVersion = "1.2"
+
+try { Stop-Transcript | Out-Null } catch [System.InvalidOperationException]{}
 Start-Transcript -Path "$PSScriptRoot\CustomSandbox.log"
 
 . "$PSScriptRoot\Config\Tasks.ps1"
@@ -15,6 +25,53 @@ $LauncherCachePath = Join-Path $LauncherMountPath "Cache"
 
 $CSMountPath = "C:\Config"
 $CSCachePath = $LauncherCachePath
+
+if (-not $SkipCompatCheck) {
+  $OSVersion = [System.Environment]::OSVersion.Version
+  $WinSKU = (Get-WmiObject Win32_OperatingSystem).OperatingSystemSKU
+  $IncompatibleSKUs = @(1,2,3,5,11,19,28,34,87,89,101,104,118,123)
+  if ($OSVersion.Major -lt 10 -or ($OSVersion.Major -eq 10 -and $OSVersion.Build -lt 18362) -or $WinSKU -in $IncompatibleSKUs) {
+      Write-Host "Unsupported Operating System: Windows 10 Pro or Enterprise 1903 or greater is required for Windows Sandbox." -ForegroundColor Red
+      Exit
+  }
+}
+
+$WSPath = "$Env:WINDIR\System32\WindowsSandbox.exe"
+if (!(Test-Path $WSPath)) {
+
+  $InstallWS = $False
+
+  if (-not $ForceWSInstall) {
+    $InstallWS = Get-MenuConfirmation -Header "Windows Sandbox is not currently installed. Would you like to attempt to install it? (Elevation Required)"
+  }
+
+  if ($InstallWS -or $ForceWSInstall) {
+    if (-Not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] 'Administrator')) {
+      
+      Write-Host "Installation requires elevated permissions."
+      
+      if ([int](Get-CimInstance -Class Win32_OperatingSystem | Select-Object -ExpandProperty BuildNumber) -ge 6000) {
+          Write-Host "Attempting to elevate..."
+          $CommandLine = "-File `"" + $MyInvocation.MyCommand.Path + "`" -ForceWSInstall " + $MyInvocation.UnboundArguments
+          Start-Process -FilePath PowerShell.exe -Verb Runas -ArgumentList $CommandLine
+          Exit
+      }
+    } else {
+      Write-Host "Attempting to install Windows Sandbox."
+      Enable-WindowsOptionalFeature -FeatureName "Containers-DisposableClientVM" -All -Online
+
+      Write-Host "Restarting $AppName..."
+      $CommandLine = "-File `"" + $MyInvocation.MyCommand.Path + "`" -ForceWSInstall " + $MyInvocation.UnboundArguments
+      Start-Process -FilePath PowerShell.exe -Verb Runas -ArgumentList $CommandLine
+      Exit
+    }
+
+  } else {
+    Write-Host "Cannot continue without Windows Sandbox. Exiting."
+    Exit
+  }
+  
+}
 
 $Config = @{}
 $Config.Tasks = @()
@@ -68,7 +125,7 @@ $CacheSize = Get-FriendlySize -MBytes (($CacheFiles | Measure-Object Length -Sum
 
 
 $MenuHeader = @"
-CustomSandbox
+$AppName v$AppVersion
 If you want access to any utilities/files inside the sandbox, add them to the following directory:
 $UtilPath
 
@@ -270,16 +327,34 @@ if ($SelectedOptions -contains 'DisableVideoInput') {
 if ($SelectedOptions -contains 'SaveConfig') {
   Write-Host "Writing CustomSandbox Configuration to $ConfigPath..."
   $Config | Add-Member -NotePropertyName 'SaveConfig' -NotePropertyValue $True -Force
+  $Config | Add-Member -NotePropertyName 'Version' -NotePropertyValue $Version -Force
   $Config | ConvertTo-Json | Set-Content -Path $ConfigPath -Encoding UTF8
 } else {
   $Config | Add-Member -NotePropertyName 'SaveConfig' -NotePropertyValue $False -Force
 }
 
 Write-Host "Writing Windows Sandbox Configuration..."
-$WinSandboxConfig = Join-Path $LauncherCachePath "CustomSandbox.wsb"
+$WinSandboxConfig = Join-Path $LauncherCachePath "$AppName.wsb"
 $XML.Save($WinSandboxConfig)
 
 Pause
+
+$WSProcess = Get-Process -Name "WindowsSandbox" -ErrorAction SilentlyContinue
+if($WSProcess) {
+
+  $KillWS = Get-MenuConfirmation -Header "Windows Sandbox is currently running. Only one instance can be run at a time. Would you like to close it?"
+
+  if($KillWS) {
+    Write-Host "Killing Windows Sandbox processes..."
+    @("WindowsSandbox", "WindowsSandboxClient") | ForEach-Object {
+      $WSProcess = Get-Process -Name $_ -ErrorAction SilentlyContinue
+      if($WSProcess) {
+        $WSProcess | Stop-Process -Force | Out-Null
+      }
+    }
+    Start-Sleep 5
+  }
+}
 
 Write-Host "Launching Windows Sandbox..."
 Invoke-Item $WinSandboxConfig

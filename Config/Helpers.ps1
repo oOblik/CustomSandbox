@@ -50,7 +50,7 @@ function Invoke-ExecuteTaskList {
     $XmlDocument = [Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime]::new()
     $XmlDocument.loadXml($xml)
     $ToastNotification = [Windows.UI.Notifications.ToastNotification, Windows.UI.Notifications, ContentType = WindowsRuntime]::new($XmlDocument)
-    $ToastNotification.Tag = 'CustomSandbox'
+    $ToastNotification.Tag = $AppName
     $Dictionary = [System.Collections.Generic.Dictionary[String, String]]::new()
     $Dictionary.Add('progressTitle','')
     $Dictionary.Add('progressValue','0')
@@ -69,7 +69,7 @@ function Invoke-ExecuteTaskList {
       $Dictionary.Add('progressValueString',"Task $($Task+1)/$($TaskList.Count)")
       $NotificationData = [Windows.UI.Notifications.NotificationData]::new($Dictionary)
       $NotificationData.SequenceNumber = 2
-      [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($AppId).Update($NotificationData,'CustomSandbox')
+      [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($AppId).Update($NotificationData,$AppName)
 
       $TaskList[$Task].ExecuteAction("execute",$false)
     }

@@ -289,7 +289,7 @@ class Menu{
 
     [System.Console]::CursorVisible = $True
 
-
+    Clear-Host
 
     return $this.GetSelectedItems()
   }
@@ -317,4 +317,30 @@ function Get-MenuSelection {
   )
   $menu = [Menu]::new($Header,$Items,$Mode)
   return $menu.GetSelections()
+}
+
+function Get-MenuConfirmation {
+  param(
+    [Parameter(Mandatory)] [string]$Header
+  )
+
+  $ConfirmMenuItems = @(
+    Get-MenuItem `
+       -Label "Yes" `
+       -Value "Yes" `
+       -Order 0 `
+       -Selected
+    Get-MenuItem `
+       -Label "No" `
+       -Value "No" `
+       -Order 1
+    )
+
+    $Result = Get-MenuSelection -Header $Header -Items $ConfirmMenuItems -Mode Single
+
+    if($Result -contains "Yes") {
+      return $true
+    }
+
+    return $False
 }
