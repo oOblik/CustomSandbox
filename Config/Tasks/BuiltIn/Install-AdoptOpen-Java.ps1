@@ -39,7 +39,7 @@ switch ($Action) {
     }
 
     $DownloadURL = "https://api.adoptium.net/v3/installer/latest/$version/ga/windows/$($Vars.arch)/$($Vars.image_type)/hotspot/normal/eclipse"
-    Invoke-WebRequest -Uri $DownloadURL -OutFile $OutPath
+    Invoke-WebRequest -Uri $DownloadURL -OutFile $OutPath -UseBasicParsing
 
     break;
   }

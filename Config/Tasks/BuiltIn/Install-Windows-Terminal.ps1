@@ -18,15 +18,15 @@ switch ($Action) {
     $Repo = "microsoft/terminal"
     $Releases = "https://api.github.com/repos/$Repo/releases"
 
-    $Package = ((Invoke-WebRequest $Releases | ConvertFrom-Json) | Where-Object { $_.prerelease -eq $false } `
+    $Package = ((Invoke-WebRequest $Releases -UseBasicParsing | ConvertFrom-Json) | Where-Object { $_.prerelease -eq $false } `
          | Select-Object -First 1).assets | Where-Object { $_.Name -like '*.msixbundle' } | Select-Object -First 1
 
     $DownloadURL = $Package.browser_download_url
 
-    Invoke-WebRequest -Uri $DownloadURL -OutFile $OutPath
+    Invoke-WebRequest -Uri $DownloadURL -OutFile $OutPath -UseBasicParsing
 
     $VCRedistDownloadURL = "https://download.visualstudio.microsoft.com/download/pr/eaab1f82-787d-4fd7-8c73-f782341a0c63/917C37D816488545B70AFFD77D6E486E4DD27E2ECE63F6BBAAF486B178B2B888/VC_redist.x64.exe"
-    Invoke-WebRequest -Uri $VCRedistDownloadURL -OutFile $VCRedistOutPath
+    Invoke-WebRequest -Uri $VCRedistDownloadURL -OutFile $VCRedistOutPath -UseBasicParsing
 
 
     $UiXamlDownloadUrl = "https://www.nuget.org/api/v2/package/Microsoft.UI.Xaml/2.8.5"

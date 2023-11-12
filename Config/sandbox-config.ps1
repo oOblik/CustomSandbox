@@ -9,6 +9,10 @@ $CSCachePath = Join-Path $CSMountPath "Cache"
 
 Start-Transcript -Path "$Env:USERPROFILE\CustomSandbox.log"
 
+if(Test-Path "C:\Users\WDAGUtilityAccount\Desktop\Config") {
+    New-Item -Path "C:\Config" -ItemType SymbolicLink -Value "C:\Users\WDAGUtilityAccount\Desktop\Config" | Out-Null
+}
+
 Write-Host 'Importing Tasks...'
 $TaskPath = Join-Path $CSMountPath "Tasks"
 $TaskCollection = New-CustomSandboxTaskCollection -Path $TaskPath

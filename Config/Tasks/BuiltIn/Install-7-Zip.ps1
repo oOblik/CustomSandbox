@@ -14,7 +14,7 @@ switch ($Action) {
     if (!$ForceCache -and (Test-Path $OutPath)) { break; }
 
     $BaseURL = "https://www.7-zip.org"
-    $WebResponse = Invoke-WebRequest "$BaseURL/download.html"
+    $WebResponse = Invoke-WebRequest "$BaseURL/download.html" -UseBasicParsing
 
     if ($WebResponse.Content) {
       $HTML = $WebResponse.Content
@@ -34,7 +34,7 @@ switch ($Action) {
       }
     }
 
-    Invoke-WebRequest -Uri $DownloadURL -OutFile $OutPath
+    Invoke-WebRequest -Uri $DownloadURL -OutFile $OutPath -UseBasicParsing
     break;
   }
 

@@ -14,7 +14,7 @@ switch ($Action) {
     if (!$ForceCache -and (Test-Path $OutPath)) { break; }
 
     $DownloadURL = "https://code.visualstudio.com/sha/download?build=stable&os=win32-x64-user"
-    Invoke-WebRequest -Uri $DownloadURL -OutFile $OutPath
+    Invoke-WebRequest -Uri $DownloadURL -OutFile $OutPath -UseBasicParsing
 
     break;
   }

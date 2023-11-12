@@ -104,7 +104,7 @@ $WSConfig = @"
     <VideoInput>Enable</VideoInput>
     <MemoryInMB></MemoryInMB>
     <LogonCommand>
-        <Command>C:\Config\sandbox-setup.cmd</Command>
+        <Command>PowerShell -ExecutionPolicy Unrestricted -WindowStyle Hidden -Command "if(Test-Path C:\Config\sandbox-config.ps1) { start powershell -WindowStyle Hidden {-file C:\Config\sandbox-config.ps1 } } else { start powershell -WindowStyle Hidden {-file C:\Users\WDAGUtilityAccount\Desktop\Config\sandbox-config.ps1 } }"</Command>
     </LogonCommand>
 </Configuration>
 "@

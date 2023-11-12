@@ -16,7 +16,7 @@ switch ($Action) {
 
     $DownloadURL = "https://download.mozilla.org/?product=firefox-msi-latest-ssl&os=win64&lang=en-US"
 
-    Invoke-WebRequest -Uri $DownloadURL -OutFile $OutPath
+    Invoke-WebRequest -Uri $DownloadURL -OutFile $OutPath -UseBasicParsing
 
     break;
   }

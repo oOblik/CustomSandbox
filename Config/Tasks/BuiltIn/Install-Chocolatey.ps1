@@ -14,7 +14,7 @@ switch ($Action) {
     if (!$ForceCache -and (Test-Path $OutPath)) { break; }
 
     $DownloadURL = "https://community.chocolatey.org/api/v2/package/chocolatey"
-    Invoke-WebRequest -Uri $DownloadURL -OutFile $OutPath
+    Invoke-WebRequest -Uri $DownloadURL -OutFile $OutPath -UseBasicParsing
 
     break;
   }

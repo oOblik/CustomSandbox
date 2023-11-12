@@ -33,7 +33,7 @@ switch ($Action) {
     New-Item -Path $CacheDir -ItemType Directory -Force | Out-Null
     New-Item -Path $PgkWorkDir -ItemType Directory -Force | Out-Null
 
-    Invoke-WebRequest -Uri $PkgURL -OutFile $PkgPath
+    Invoke-WebRequest -Uri $PkgURL -OutFile $PkgPath -UseBasicParsing
 
     if (!(Test-Path $PkgPath)) {
       Write-Error "Failed to download package $PackageName"

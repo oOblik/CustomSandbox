@@ -14,7 +14,7 @@ switch ($Action) {
     if (!$ForceCache -and (Test-Path $OutPath)) { break; }
 
     $VersionURL = "https://www.openoffice.org/download/globalvars.js"
-    $WebResponse = Invoke-WebRequest $VersionURL
+    $WebResponse = Invoke-WebRequest $VersionURL -UseBasicParsing
 
     if ($WebResponse.Content) {
       $Version = $WebResponse.Content -match 'DL.VERSION[.\s]+= ["](.+)["];'
@@ -24,7 +24,7 @@ switch ($Action) {
       }
     }
 
-    Invoke-WebRequest -Uri $DownloadURL -OutFile $OutPath
+    Invoke-WebRequest -Uri $DownloadURL -OutFile $OutPath -UseBasicParsing
     break;
   }
 

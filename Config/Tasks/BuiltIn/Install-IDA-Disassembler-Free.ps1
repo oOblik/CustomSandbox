@@ -15,7 +15,7 @@ switch ($Action) {
 
     $BaseURL = "https://hex-rays.com/ida-free/"
 
-    $WebResponse = Invoke-WebRequest $BaseURL
+    $WebResponse = Invoke-WebRequest $BaseURL -UseBasicParsing
 
     if ($WebResponse.Content) {
       $HTML = $WebResponse.Content
@@ -31,7 +31,7 @@ switch ($Action) {
       $DownloadPath = ($comHtml.all.tags('a') | Where-Object { $_.textContent -like '*IDA Free for Windows*' } | Select-Object -First 1).href
     }
 
-    Invoke-WebRequest -Uri $DownloadPath -OutFile $OutPath
+    Invoke-WebRequest -Uri $DownloadPath -OutFile $OutPath -UseBasicParsing
     break;
   }
 

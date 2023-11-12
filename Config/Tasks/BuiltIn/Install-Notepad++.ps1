@@ -18,12 +18,12 @@ switch ($Action) {
     $Repo = "notepad-plus-plus/notepad-plus-plus"
     $Releases = "https://api.github.com/repos/$Repo/releases"
 
-    $DownloadURL = (((Invoke-WebRequest $Releases | ConvertFrom-Json) | Where-Object { $_.prerelease -eq $false } | Select-Object -First 1).assets | Where-Object { $_.browser_download_url -like '*npp.*.Installer.x64.exe' }).browser_download_url
+    $DownloadURL = (((Invoke-WebRequest $Releases -UseBasicParsing | ConvertFrom-Json) | Where-Object { $_.prerelease -eq $false } | Select-Object -First 1).assets | Where-Object { $_.browser_download_url -like '*npp.*.Installer.x64.exe' }).browser_download_url
 
-    Invoke-WebRequest -Uri $DownloadURL -OutFile $OutPath
+    Invoke-WebRequest -Uri $DownloadURL -OutFile $OutPath -UseBasicParsing
 
     $ThemeDownloadURL = "https://raw.githubusercontent.com/hellon8/VS2019-Dark-Npp/master/VS2019-Dark.xml"
-    Invoke-WebRequest -Uri $ThemeDownloadURL -OutFile $ThemeOutPath
+    Invoke-WebRequest -Uri $ThemeDownloadURL -OutFile $ThemeOutPath -UseBasicParsing
 
     break;
   }

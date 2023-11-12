@@ -50,7 +50,7 @@ function Invoke-ExecuteTaskList {
     $XmlDocument = [Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime]::new()
     $XmlDocument.loadXml($xml)
     $ToastNotification = [Windows.UI.Notifications.ToastNotification, Windows.UI.Notifications, ContentType = WindowsRuntime]::new($XmlDocument)
-    $ToastNotification.Tag = $AppName
+    $ToastNotification.Tag = "CustomSandbox"
     $Dictionary = [System.Collections.Generic.Dictionary[String, String]]::new()
     $Dictionary.Add('progressTitle','')
     $Dictionary.Add('progressValue','0')
@@ -121,23 +121,39 @@ function Update-Wallpaper {
 }
 
 function Hide-Icons {
-  Set-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer' -Name 'NoDesktop' -Value 1
+  if(!(Test-Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer')) {
+    New-Item -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies' -Name Explorer -Force | Out-Null
+  }
+  Set-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer' -Name 'NoDesktop' -Value 1 -Force
 }
 
 function Show-Icons {
-  Set-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer' -Name 'NoDesktop' -Value 0
+  if(!(Test-Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer')) {
+    New-Item -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies' -Name Explorer -Force | Out-Null
+  }
+  Set-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer' -Name 'NoDesktop' -Value 0 -Force
 }
 
 function Hide-Taskbar {
-  $v = (Get-ItemProperty -Path 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StuckRects3').Settings
-  $v[8] = 3
-  Set-ItemProperty -Path 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StuckRects3' -Name 'Settings' -Value $v
+  if(!(Test-Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer')) {
+    New-Item -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies' -Name Explorer -Force | Out-Null
+  }
+  if(Test-Path 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StuckRects3\Settings') {
+    $v = (Get-ItemProperty -Path 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StuckRects3').Settings
+    $v[8] = 3
+    Set-ItemProperty -Path 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StuckRects3' -Name 'Settings' -Value $v -Force
+  }
 }
 
 function Show-Taskbar {
-  $v = (Get-ItemProperty -Path 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StuckRects3').Settings
-  $v[8] = 2
-  Set-ItemProperty -Path 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StuckRects3' -Name 'Settings' -Value $v
+  if(!(Test-Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer')) {
+    New-Item -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies' -Name Explorer -Force | Out-Null
+  }
+  if(Test-Path 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StuckRects3\Settings') {
+    $v = (Get-ItemProperty -Path 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StuckRects3').Settings
+    $v[8] = 2
+    Set-ItemProperty -Path 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StuckRects3' -Name 'Settings' -Value $v -Force
+  }
 }
 
 function New-Shortcut {
@@ -201,7 +217,7 @@ function Invoke-BlindFileDownload {
 
   $Destination = Join-Path $FolderPath $Filename
 
-  Invoke-WebRequest -Uri $FileUri.AbsoluteUri -OutFile $Destination
+  Invoke-WebRequest -Uri $FileUri.AbsoluteUri -OutFile $Destination -UseBasicParsing
 
   return $Filename
 }

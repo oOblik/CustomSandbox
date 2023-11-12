@@ -54,7 +54,7 @@ switch ($Action) {
     if (!$ForceCache -and (Test-Path $OutPath)) { break; }
 
     $DownloadURL = "https://download.manageengine.com/products/mibbrowser-free-tool/9229779/ManageEngine_MibBrowser_FreeTool_64bit.exe"
-    Invoke-WebRequest -Uri $DownloadURL -OutFile $OutPath
+    Invoke-WebRequest -Uri $DownloadURL -OutFile $OutPath -UseBasicParsing
 
     break;
   }

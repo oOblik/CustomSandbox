@@ -15,7 +15,7 @@ switch ($Action) {
     if (!$ForceCache -and (Test-Path $OutPath)) { break; }
 
     $DownloadURL = "https://download.sysinternals.com/files/BGInfo.zip"
-    Invoke-WebRequest -Uri $DownloadURL -OutFile $OutArchivePath
+    Invoke-WebRequest -Uri $DownloadURL -OutFile $OutArchivePath -UseBasicParsing
 
     if (Test-Path $OutArchivePath) {
       Expand-Archive -LiteralPath $OutArchivePath -DestinationPath $CSCachePath -Force

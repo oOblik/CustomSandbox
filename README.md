@@ -50,7 +50,7 @@ Installation tasks pre-download and cache required installation files outside of
 
 [Enable Windows Sandbox on Windows](https://learn.microsoft.com/en-us/windows/security/application-security/application-isolation/windows-sandbox/windows-sandbox-overview#prerequisites)
 
-⚠️ *DISCLAIMER:* _CustomSandbox has been tested with Windows 11 22H2 and PowerShell 5.1. While it should work from Windows 10 22H2 or later, your results may vary._
+⚠️ *DISCLAIMER:* _CustomSandbox has been tested with Windows 11 22H2 and PowerShell 5.1. While it should work from Windows 10 1903 or later, your results may vary._
 
 ## 💻 Installation / Usage
 
