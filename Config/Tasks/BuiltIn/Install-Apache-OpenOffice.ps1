@@ -31,7 +31,6 @@ switch ($Action) {
   "execute" {
     if (Test-Path $OutPath) {
       Start-Process -FilePath "$OutPath" -ArgumentList "/S RebootYesNo=No CREATEDESKTOPLINK=0 ADDLOCAL=ALL REMOVE=gm_o_Quickstart,gm_o_Onlineupdate" -WindowStyle Hidden -Wait
-      Remove-Item -Path "$Env:PUBLIC\Desktop\OpenOffice*.lnk" -Force | Out-Null
     } else {
       Write-Host "Installer not found for task $($MyInvocation.MyCommand.Name)"
     }

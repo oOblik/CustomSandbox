@@ -1,0 +1,6 @@
+{
+    "id": "removedesktopshortcuts",
+    "name": "[Windows Settings] Remove Desktop Shortcuts",
+    "type": "postconfig",
+    "script": "PostConfig-Remove-Desktop-Shortcuts.ps1"
+}

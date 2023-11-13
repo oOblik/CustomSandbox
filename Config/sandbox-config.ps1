@@ -43,10 +43,6 @@ Write-Host 'Running Configuration Tasks...'
 
 Invoke-ExecuteTaskList -TaskList $ConfigTasks -Type "Configuration Tasks"
 
-Write-Host 'Adding Utilities Shortcut...'
-$UtilPath = Join-Path $CSMountPath "Utilities"
-New-Shortcut -Path "$Env:USERPROFILE\Desktop\Utilities.lnk" -TargetPath $UtilPath
-
 #Configure Taskbar Items
 Write-Host 'Setting Taskbar...'
 Import-StartLayout -LayoutPath "$CSMountPath\Assets\TaskbarLayout.xml" -MountPath "$Env:SYSTEMDRIVE\"
@@ -59,6 +55,12 @@ Set-IconVisibility
 Write-Host 'Running Post-Configuration Tasks...'
 
 Invoke-ExecuteTaskList -TaskList $PostConfigTasks -Type "Post-Configuration Tasks"
+
+$UtilPath = Join-Path $CSMountPath "Utilities"
+if((Get-ChildItem -Path $UtilPath -File -Recurse).Count -gt 0) {
+    Write-Host 'Adding Utilities Shortcut...'
+    New-Shortcut -Path "$Env:USERPROFILE\Desktop\Utilities.lnk" -TargetPath $UtilPath
+}
 
 Write-Host 'Resetting Explorer...'
 Restart-Explorer
