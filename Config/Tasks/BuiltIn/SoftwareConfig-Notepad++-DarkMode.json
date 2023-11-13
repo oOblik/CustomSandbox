@@ -1,0 +1,7 @@
+{
+    "id": "notepadpp-darkmode",
+    "name": "[Software Config] Notepad++ - Dark Mode",
+    "dependencies": ["notepadpp"],
+    "type": "config",
+    "script": "SoftwareConfig-Notepad++-DarkMode.ps1"
+}

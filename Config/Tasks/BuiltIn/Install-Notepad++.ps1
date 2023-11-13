@@ -8,8 +8,6 @@ param(
 )
 
 $OutPath = "$CSCachePath\npp.latest.Installer.x64.exe"
-$ThemeOutPath = "$CSCachePath\VS2015-Dark.xml"
-$ConfigPath = "$CSMountPath\Assets\NppConfig.xml"
 
 switch ($Action) {
   "cache" {
@@ -22,28 +20,12 @@ switch ($Action) {
 
     Invoke-WebRequest -Uri $DownloadURL -OutFile $OutPath -UseBasicParsing
 
-    $ThemeDownloadURL = "https://raw.githubusercontent.com/hellon8/VS2019-Dark-Npp/master/VS2019-Dark.xml"
-    Invoke-WebRequest -Uri $ThemeDownloadURL -OutFile $ThemeOutPath -UseBasicParsing
-
     break;
   }
 
   "execute" {
     if (Test-Path $OutPath) {
       Start-Process -FilePath $OutPath -ArgumentList "/S" -WindowStyle Hidden -Wait
-
-      $LocalConfigPath = Join-Path $env:APPDATA "Notepad++"
-      $ThemePath = Join-Path $LocalConfigPath "themes"
-
-      if (!(Test-Path $ThemePath)) {
-        New-Item -Path $ThemePath -ItemType Directory -Force | Out-Null
-      }
-
-      $ThemeFullPath = Join-Path $ThemePath "VS2019-Dark.xml"
-      $LocalConfigFullPath = Join-Path $LocalConfigPath "config.xml"
-
-      Copy-Item $ThemeOutPath -Destination $ThemeFullPath | Out-Null
-      Copy-Item $ConfigPath -Destination $LocalConfigFullPath | Out-Null
 
       if (([Environment]::OSVersion.Version).Build -ge 22000) {
         $NPPExe = "$env:LOCALAPPDATA\Programs\Notepad++\notepad++.exe"
