@@ -84,7 +84,7 @@ function Update-Wallpaper {
   [CmdletBinding(SupportsShouldProcess)]
   param(
     [Parameter(Position = 0,HelpMessage = "The path to the wallpaper file.")]
-    [Alias("wallpaper")]
+    [Alias("Wallpaper")]
     [ValidateScript({ Test-Path $_ })]
     [string]$Path = $(Get-ItemPropertyValue -Path 'HKCU:\Control Panel\Desktop\' -Name Wallpaper)
   )
@@ -110,50 +110,65 @@ function Update-Wallpaper {
     }
 "@
 
-  Set-ItemProperty 'HKCU:\Control Panel\Desktop\' -Name 'WallpaperOriginX' -Value 0 -Force
-  Set-ItemProperty 'HKCU:\Control Panel\Desktop\' -Name 'WallpaperOriginY' -Value 0 -Force
-  Set-ItemProperty 'HKCU:\Control Panel\Desktop\' -Name 'WallpaperStyle' -Value 2 -Force
-  Set-ItemProperty 'HKCU:\Control Panel\Desktop\' -Name 'JPEGImportQuality' -Value 100 -Force
+  $RegKey = "HKCU:\Control Panel\Desktop"
+  Set-ItemProperty $RegKey -Name "WallpaperOriginX" -Value 0 -Force
+  Set-ItemProperty $RegKey -Name "WallpaperOriginY" -Value 0 -Force
+  Set-ItemProperty $RegKey -Name "WallpaperStyle" -Value 2 -Force
+  Set-ItemProperty $RegKey -Name "JPEGImportQuality" -Value 100 -Force
 
-  if ($PSCmdlet.shouldProcess($path)) {
+  if ($PSCmdlet.shouldProcess($Path)) {
     [Wallpaper.UpdateImage]::Refresh($Path)
   }
 }
 
-function Hide-Icons {
-  if(!(Test-Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer')) {
-    New-Item -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies' -Name Explorer -Force | Out-Null
+function Set-IconVisibility {
+  param(
+    [switch]$Hidden
+  )
+
+  $RegPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies"
+  $RegKey = "Explorer"
+  $RegKeyFullPath = Join-Path $RegPath $RegKey
+  $RegValue = "NoDesktop"
+
+  if(!(Test-Path $RegKeyFullPath)) {
+    New-Item -Path $RegPath -Name $RegKey | Out-Null
+    New-ItemProperty -Path $RegKeyFullPath -Name $RegValue -Value 0 -Force | Out-Null
   }
-  Set-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer' -Name 'NoDesktop' -Value 1 -Force
+
+  if($Hidden) {
+    Set-ItemProperty -Path $RegKeyFullPath -Name $RegValue -Value 1 -Force
+  } else {
+    Set-ItemProperty -Path $RegKeyFullPath -Name $RegValue -Value 0 -Force
+  }
+  
 }
 
-function Show-Icons {
-  if(!(Test-Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer')) {
-    New-Item -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies' -Name Explorer -Force | Out-Null
-  }
-  Set-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer' -Name 'NoDesktop' -Value 0 -Force
-}
+function Set-TaskbarVisibility {
+  param(
+    [switch]$Hidden
+  )
 
-function Hide-Taskbar {
-  if(!(Test-Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer')) {
-    New-Item -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies' -Name Explorer -Force | Out-Null
-  }
-  if(Test-Path 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StuckRects3\Settings') {
-    $v = (Get-ItemProperty -Path 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StuckRects3').Settings
-    $v[8] = 3
-    Set-ItemProperty -Path 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StuckRects3' -Name 'Settings' -Value $v -Force
-  }
-}
+  $RegPath = "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer"
+  $RegKey = "StuckRects3"
+  $RegKeyFullPath = Join-Path $RegPath $RegKey
+  $RegValue = "Settings"
 
-function Show-Taskbar {
-  if(!(Test-Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer')) {
-    New-Item -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies' -Name Explorer -Force | Out-Null
+  if(!(Test-Path $RegKeyFullPath)) {
+    $RegValueDefault = [byte[]](0x30,0x00,0x00,0x00,0xFE,0xFF,0xFF,0xFF,0x02,0x00,0x00,0x00,0x03,0x00,0x00,0x00,0x3E,0x00,0x00,0x00,0x28,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x3B,0x02,0x00,0x00,0xE8,0x04,0x00,0x00,0x63,0x02,0x00,0x00,0x60,0x00,0x00,0x00,0x01,0x00,0x00,0x00)
+    New-Item -Path $RegPath -Name $RegKey | Out-Null
+    New-ItemProperty -Path $RegKeyFullPath -Name $RegValue -PropertyType Binary -Value $RegValueDefault | Out-Null
   }
-  if(Test-Path 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StuckRects3\Settings') {
-    $v = (Get-ItemProperty -Path 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StuckRects3').Settings
-    $v[8] = 2
-    Set-ItemProperty -Path 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StuckRects3' -Name 'Settings' -Value $v -Force
+
+  $RegValueCurrent = Get-ItemPropertyValue -Path $RegKeyFullPath -Name $RegValue
+
+  if($Hidden) {
+    $RegValueCurrent[8] = 3
+  } else {
+    $RegValueCurrent[8] = 2
   }
+
+  Set-ItemProperty -Path $RegKeyFullPath -Name $RegValue -Value $RegValueCurrent -Force | Out-Null
 }
 
 function New-Shortcut {

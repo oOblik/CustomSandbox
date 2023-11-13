@@ -5,13 +5,16 @@ $ProgressPreference = 'SilentlyContinue'
 . "$PSScriptRoot\Helpers.ps1"
 
 $CSMountPath = $PSScriptRoot
+$OldWSMountPath = "C:\Users\WDAGUtilityAccount\Desktop\Config"
 $CSCachePath = Join-Path $CSMountPath "Cache"
 
 Start-Transcript -Path "$Env:USERPROFILE\CustomSandbox.log"
 
-if(Test-Path "C:\Users\WDAGUtilityAccount\Desktop\Config") {
-    New-Item -Path "C:\Config" -ItemType SymbolicLink -Value "C:\Users\WDAGUtilityAccount\Desktop\Config" | Out-Null
+if(Test-Path $OldWSMountPath ) {
+    New-Item -Path "C:\Config" -ItemType SymbolicLink -Value $OldWSMountPath | Out-Null
+    & attrib +s +h "C:\Config" /l
 }
+
 
 Write-Host 'Importing Tasks...'
 $TaskPath = Join-Path $CSMountPath "Tasks"
@@ -28,8 +31,8 @@ $ConfigTasks = $TaskCollection.Tasks | Where-Object { $_.Type -ne 'preconfig' -a
 #Set limited GUI for configuration mode
 Write-Host 'Setting Initial Wallpaper...'
 Update-WallPaper -Path "$CSMountPath\Assets\Wait.jpg"
-Hide-Taskbar
-Hide-Icons
+Set-TaskbarVisibility -Hidden
+Set-IconVisibility -Hidden
 Restart-Explorer
 
 Write-Host 'Pre-Configuration Tasks...'
@@ -50,8 +53,8 @@ Import-StartLayout -LayoutPath "$CSMountPath\Assets\TaskbarLayout.xml" -MountPat
 
 Write-Host 'Setting Final Wallpaper...'
 Update-WallPaper -Path "$CSMountPath\Wallpaper.jpg"
-Show-Taskbar
-Show-Icons
+Set-TaskbarVisibility
+Set-IconVisibility
 
 Write-Host 'Running Post-Configuration Tasks...'
 
