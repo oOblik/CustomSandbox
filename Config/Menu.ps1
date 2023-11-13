@@ -45,7 +45,14 @@ class Menu{
   hidden [string[]]$DependencyList = @()
   hidden [int]$CurrentIndex = 0
   hidden [bool]$SelectionChanged = $True
-  hidden [int]$maxHeight = 10
+  hidden [int]$MaxHeight = 10
+  hidden [int]$ScrollTop = 0
+  hidden [int]$ScrollBottom = 0
+
+  $DefaultForegroundColor = (Get-Host).UI.RawUI.ForegroundColor
+  $DefaultBackgroundColor = (Get-Host).UI.RawUI.BackgroundColor
+
+  $WindowSize = (Get-Host).UI.RawUI.WindowSize
 
   Menu ([string]$Header,[MenuItem[]]$Items,[string]$Mode) {
     $this.Header = $Header
@@ -68,35 +75,32 @@ class Menu{
   }
 
   hidden [bool] ProcessInput ($keyPress) {
+
     switch ($keyPress.Key) {
       $([ConsoleKey]::DownArrow) {
         $this.CurrentIndex++
-        if ($this.CurrentIndex -ge $this.Items.length) {
-          $this.CurrentIndex = $this.Items.length - 1;
+        if($this.CurrentIndex -gt $this.ScrollTop + $this.MaxHeight) {
+          $this.ScrollTop++
         }
       }
       $([ConsoleKey]::PageDown) {
-        $this.CurrentIndex += $this.maxHeight
-        if ($this.CurrentIndex -ge $this.Items.length) {
-          $this.CurrentIndex = $this.Items.length - 1;
-        }
+        $this.CurrentIndex += $this.MaxHeight
+        $this.ScrollTop += $this.MaxHeight
       }
       $([ConsoleKey]::UpArrow) {
-        $this.CurrentIndex --
-        if ($this.CurrentIndex -lt 0) {
-          $this.CurrentIndex = 0;
+        $this.CurrentIndex--
+        if($this.CurrentIndex -lt $this.ScrollTop) {
+          $this.ScrollTop--
         }
       }
       $([ConsoleKey]::PageUp) {
-        $this.CurrentIndex -= $this.maxHeight
-        if ($this.CurrentIndex -lt 0) {
-          $this.CurrentIndex = 0;
-        }
+        $this.CurrentIndex -= $this.MaxHeight
+        $this.ScrollTop -= $this.MaxHeight
       }
       $([ConsoleKey]::Spacebar) {
         if ($this.Mode -eq 'Multi') {
           $CurrentItem = $this.GetCurrentItem()
-          if (-not ($CurrentItem.ReadOnly -or $CurrentItem.Value -in $this.DependencyList)) {
+          if (-not $CurrentItem.ReadOnly) {
             $CurrentItem.Selected = !$CurrentItem.Selected;
           }
           $this.SelectionChanged = $True
@@ -110,102 +114,123 @@ class Menu{
       $([ConsoleKey]::Escape) {
         exit
       }
-      Default {
-
-      }
+      Default {}
     }
+
+    if ($this.CurrentIndex -gt $this.Items.Count - 1) {
+      $this.CurrentIndex = $this.Items.Count - 1;
+      $this.ScrollTop = $this.Items.Count - 1 - $this.MaxHeight;
+    }
+    if ($this.CurrentIndex -lt 0) {
+      $this.CurrentIndex = 0;
+      $this.ScrollTop = 0;
+    }
+
     return $false
   }
 
+  hidden ScrollingCalculations () {
+
+    $this.MaxHeight = $this.WindowSize.Height - ($this.Header | Measure-Object -Line).Lines - 6
+
+    if ($this.MaxHeight -lt 1) {
+      $this.MaxHeight = 1
+    }
+
+    if($this.MaxHeight -gt $this.Items.Count - 1) {
+      $this.MaxHeight = $this.Items.Count - 1
+    }
+
+    if($this.ScrollTop -gt $this.CurrentIndex -or ($this.ScrollTop + $this.MaxHeight) -lt $this.CurrentIndex) {
+      $this.ScrollTop = $this.CurrentIndex
+    }
+
+    if($this.ScrollTop -lt 0) {
+      $this.ScrollTop = 0
+    }
+
+    if($this.ScrollTop -gt $this.Items.Count - 1 - $this.MaxHeight) {
+      $this.ScrollTop = $this.Items.Count - 1 - $this.MaxHeight
+    }
+
+    $this.ScrollBottom = $this.ScrollTop + $this.MaxHeight
+
+    if($this.ScrollBottom -lt 0) {
+      $this.ScrollBottom = 0
+    }
+
+    if($this.ScrollBottom -gt $this.Items.Count - 1) {
+      $this.ScrollBottom = $this.Items.Count - 1
+    }
+
+  }
+
+  hidden DrawMenuItem ([MenuItem]$MenuItem, [switch]$CurrentItem) {
+
+    $ForegroundColor = $this.DefaultForegroundColor
+    $BackgroundColor = $this.DefaultBackgroundColor
+
+    $Dependency = ($MenuItem.Value -in $this.DependencyList)
+    $Selected = ($MenuItem.Selected)
+    $ReadOnly = ($MenuItem.ReadOnly)
+
+    $Prefix = " "
+
+    if ($this.Mode -eq "Multi") {
+      if ($Selected) {
+        $Prefix = "[X]"
+      } elseif ($Dependency) {
+        $Prefix = "[*]"
+      } else {
+        $Prefix = "[ ]"
+      }
+    } else {
+      if ($CurrentItem) {
+        $Prefix = ">"
+      }
+    }
+
+    $ItemString = "$Prefix $($MenuItem.Label)"
+
+    if ($ItemString.length -gt $this.WindowSize.Width) {
+      $ItemString = $ItemString.Substring(0,($this.WindowSize.Width - 3)) + '...'
+    }
+
+    if ($CurrentItem) {
+      $BackgroundColor = [ConsoleColor]::DarkRed
+    }
+
+    if ($this.Mode -eq "Multi") {
+      if ($Selected) {
+        $ForegroundColor = [ConsoleColor]::Green
+      } elseif ($Dependency) {
+        $ForegroundColor = [ConsoleColor]::DarkYellow
+      } elseif ($ReadOnly) {
+        $ForegroundColor = [ConsoleColor]::DarkGray
+      } 
+    }
+
+    Write-Host $ItemString -ForegroundColor $ForegroundColor -BackgroundColor $BackgroundColor
+  }
+
   hidden Draw () {
-    $DefaultForegroundColor = (Get-Host).UI.RawUI.ForegroundColor
-    $DefaultBackgroundColor = (Get-Host).UI.RawUI.BackgroundColor
 
     $HeaderColor = [ConsoleColor]::Magenta
-
-    $WindowSize = (Get-Host).UI.RawUI.WindowSize
-
-    $this.maxHeight = $WindowSize.Height - ($this.Header | Measure-Object -Line).Lines - 6
-    if ($this.maxHeight -lt 1) {
-      $this.maxHeight = 1
-    }
 
     Write-Host $this.Header -ForegroundColor $HeaderColor
     Write-Host
 
-    if ($this.CurrentIndex -gt $this.maxHeight) {
+    if ($this.ScrollTop -gt 0) {
       Write-Host (" {0} More {0} " -f [char]9650) -ForegroundColor Yellow
     } else {
       Write-Host
     }
 
-    $ShowMore = $False
-
-    for ($i = 0; $i -lt $this.Items.Count; $i++) {
-
-      $ForegroundColor = $DefaultForegroundColor
-      $BackgroundColor = $DefaultBackgroundColor
-
-      if ($this.CurrentIndex -gt $this.maxHeight) {
-        if ($i -lt ($this.CurrentIndex - $this.maxHeight)) {
-          continue;
-        }
-
-        if ($i -gt $this.CurrentIndex) {
-          $ShowMore = $True
-          continue;
-        }
-      } else {
-        if ($i -gt $this.maxHeight) {
-          $ShowMore = $True
-          continue;
-        }
-      }
-
-      $CurrentItem = ($i -eq $this.CurrentIndex)
-      $Dependency = ($this.Items[$i].Value -in $this.DependencyList)
-      $Selected = ($this.Items[$i].Selected)
-      $ReadOnly = ($this.Items[$i].ReadOnly)
-
-      $Prefix = " "
-
-      if ($this.Mode -eq "Multi") {
-        if ($Dependency) {
-          $Prefix = "[*]"
-        } elseif ($Selected) {
-          $Prefix = "[X]"
-        } else {
-          $Prefix = "[ ]"
-        }
-      } else {
-        if ($CurrentItem) {
-          $Prefix = ">"
-        }
-      }
-
-      $ItemString = "$Prefix $($this.Items[$i].Label)"
-
-      if ($ItemString.length -gt $WindowSize.Width) {
-        $ItemString = $ItemString.Substring(0,($WindowSize.Width - 3)) + '...'
-      }
-
-      if ($CurrentItem) {
-        $BackgroundColor = [ConsoleColor]::DarkRed
-      }
-
-      if ($this.Mode -eq "Multi" -and ($ReadOnly)) {
-        $ForegroundColor = [ConsoleColor]::DarkGray
-      }
-
-      if ($this.Mode -eq "Multi" -and ($Dependency)) {
-        $ForegroundColor = [ConsoleColor]::DarkYellow
-      }
-
-      Write-Host $ItemString -ForegroundColor $ForegroundColor -BackgroundColor $BackgroundColor
-
+    for ($i = $this.ScrollTop; $i -le $this.ScrollBottom; $i++) {
+      $this.DrawMenuItem($this.Items[$i], ($i -eq $this.CurrentIndex))
     }
 
-    if ($ShowMore) {
+    if ($this.ScrollBottom -lt ($this.Items.Count - 1)) {
       Write-Host (" {0} More {0} " -f [char]9660) -ForegroundColor Yellow
     } else {
       Write-Host
@@ -275,10 +300,15 @@ class Menu{
     $Finished = $False
 
     do {
+      
+      $this.WindowSize = (Get-Host).UI.RawUI.WindowSize
+
       if($this.SelectionChanged) {
         $this.CalcDependencies()
       }
-
+      
+      $this.ScrollingCalculations()
+      
       Clear-Host
 
       $this.Draw()
