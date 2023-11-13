@@ -48,6 +48,9 @@ class Menu{
   hidden [int]$MaxHeight = 10
   hidden [int]$ScrollTop = 0
   hidden [int]$ScrollBottom = 0
+  hidden [char[]]$ScrollBarBuffer
+  hidden [bool]$ShowScroll = $false
+  hidden [int]$IndexState = !$CurrentIndex
 
   $DefaultForegroundColor = (Get-Host).UI.RawUI.ForegroundColor
   $DefaultBackgroundColor = (Get-Host).UI.RawUI.BackgroundColor
@@ -58,6 +61,7 @@ class Menu{
     $this.Header = $Header
     $this.Items = $Items | Sort-Object -Property @{ Expression = "Order"; Descending = $false },@{ Expression = "Label"; Descending = $false }
     $this.Mode = $Mode
+    $this.ScrollBarBuffer = [char[]]::New($Items.Count)
   }
 
   hidden Init (
@@ -132,40 +136,60 @@ class Menu{
   hidden ScrollingCalculations () {
 
     $this.MaxHeight = $this.WindowSize.Height - ($this.Header | Measure-Object -Line).Lines - 6
+    $ItemCount = $this.Items.Count - 1
 
     if ($this.MaxHeight -lt 1) {
       $this.MaxHeight = 1
     }
 
-    if($this.MaxHeight -gt $this.Items.Count - 1) {
-      $this.MaxHeight = $this.Items.Count - 1
+    if ($this.MaxHeight -gt $ItemCount) {
+      $this.MaxHeight = $ItemCount
     }
 
-    if($this.ScrollTop -gt $this.CurrentIndex -or ($this.ScrollTop + $this.MaxHeight) -lt $this.CurrentIndex) {
+    if ($this.ScrollTop -gt $this.CurrentIndex -or ($this.ScrollTop + $this.MaxHeight) -lt $this.CurrentIndex) {
       $this.ScrollTop = $this.CurrentIndex
     }
 
-    if($this.ScrollTop -lt 0) {
+    if ($this.ScrollTop -lt 0) {
       $this.ScrollTop = 0
     }
 
-    if($this.ScrollTop -gt $this.Items.Count - 1 - $this.MaxHeight) {
-      $this.ScrollTop = $this.Items.Count - 1 - $this.MaxHeight
+    if ($this.ScrollTop -gt $ItemCount - $this.MaxHeight) {
+      $this.ScrollTop = $ItemCount - $this.MaxHeight
     }
 
     $this.ScrollBottom = $this.ScrollTop + $this.MaxHeight
 
-    if($this.ScrollBottom -lt 0) {
+    if ($this.ScrollBottom -lt 0) {
       $this.ScrollBottom = 0
     }
 
-    if($this.ScrollBottom -gt $this.Items.Count - 1) {
-      $this.ScrollBottom = $this.Items.Count - 1
+    if ($this.ScrollBottom -gt $ItemCount) {
+      $this.ScrollBottom = $ItemCount
     }
 
+    $ListHeight = $this.MaxHeight + 1
+    $ScrollRatio = $ListHeight / $ItemCount
+    $this.ShowScroll = (($this.MaxHeight / $ItemCount) -lt 1)
+
+    if ($this.ShowScroll) {
+      $ScrollOffset = $this.ScrollTop * $ScrollRatio
+      $ScrollCap = $ScrollOffset + ($ScrollRatio * $ListHeight)
+
+      for ($x=0; $x -lt $ScrollOffset; $x++) {
+        $this.ScrollBarBuffer[$x] = [char]9474
+      }
+      for ($x=$ScrollOffset; $x -lt $ScrollCap; $x++) {
+        $this.ScrollBarBuffer[$x] = [char]9608
+      }
+      for ($x=$ScrollCap; $x -lt $ListHeight; $x++) {
+        $this.ScrollBarBuffer[$x] = [char]9474
+      }
+    }
+    
   }
 
-  hidden DrawMenuItem ([MenuItem]$MenuItem, [switch]$CurrentItem) {
+  hidden DrawMenuItem ([MenuItem]$MenuItem, [switch]$CurrentItem, [int]$VisibleIndex) {
 
     $ForegroundColor = $this.DefaultForegroundColor
     $BackgroundColor = $this.DefaultBackgroundColor
@@ -173,6 +197,12 @@ class Menu{
     $Dependency = ($MenuItem.Value -in $this.DependencyList)
     $Selected = ($MenuItem.Selected)
     $ReadOnly = ($MenuItem.ReadOnly)
+
+    if ($this.ShowScroll) {
+      Write-Host "$($this.ScrollBarBuffer[$VisibleIndex]) " -NoNewline
+    } else {
+      Write-Host "  " -NoNewline
+    }
 
     $Prefix = " "
 
@@ -192,8 +222,8 @@ class Menu{
 
     $ItemString = "$Prefix $($MenuItem.Label)"
 
-    if ($ItemString.length -gt $this.WindowSize.Width) {
-      $ItemString = $ItemString.Substring(0,($this.WindowSize.Width - 3)) + '...'
+    if ($ItemString.length -gt ($this.WindowSize.Width-2)) {
+      $ItemString = $ItemString.Substring(0,($this.WindowSize.Width - 5)) + '...'
     }
 
     if ($CurrentItem) {
@@ -220,18 +250,20 @@ class Menu{
     Write-Host $this.Header -ForegroundColor $HeaderColor
     Write-Host
 
-    if ($this.ScrollTop -gt 0) {
-      Write-Host (" {0} More {0} " -f [char]9650) -ForegroundColor Yellow
+    if ($this.ShowScroll) {
+      Write-Host ("{0}" -f [char]9650) -ForegroundColor Yellow
     } else {
       Write-Host
     }
 
-    for ($i = $this.ScrollTop; $i -le $this.ScrollBottom; $i++) {
-      $this.DrawMenuItem($this.Items[$i], ($i -eq $this.CurrentIndex))
+    $VisibleIndex = 0
+    for ($Index = $this.ScrollTop; $Index -le $this.ScrollBottom; $Index++) {
+      $this.DrawMenuItem($this.Items[$Index], ($Index -eq $this.CurrentIndex), $VisibleIndex)
+      $VisibleIndex++
     }
 
-    if ($this.ScrollBottom -lt ($this.Items.Count - 1)) {
-      Write-Host (" {0} More {0} " -f [char]9660) -ForegroundColor Yellow
+    if ($this.ShowScroll) {
+      Write-Host ("{0}" -f [char]9660) -ForegroundColor Yellow
     } else {
       Write-Host
     }
@@ -301,20 +333,26 @@ class Menu{
 
     do {
       
-      $this.WindowSize = (Get-Host).UI.RawUI.WindowSize
+      if ($this.CurrentIndex -ne $this.IndexState -or $this.SelectionChanged) {
+        $this.IndexState = $this.CurrentIndex
 
-      if($this.SelectionChanged) {
-        $this.CalcDependencies()
+        $this.WindowSize = (Get-Host).UI.RawUI.WindowSize
+
+        if ($this.SelectionChanged) {
+          $this.CalcDependencies()
+        }
+        
+        $this.ScrollingCalculations()
+
+        Clear-Host
+
+        $this.Draw()
+
       }
-      
-      $this.ScrollingCalculations()
-      
-      Clear-Host
-
-      $this.Draw()
 
       $this.SelectionChanged = $False
       $Finished = $this.ProcessInput([Console]::ReadKey("NoEcho,IncludeKeyDown"))
+  
     } while (-not $Finished)
 
     [System.Console]::CursorVisible = $True
@@ -369,7 +407,7 @@ function Get-MenuConfirmation {
     $Result = Get-MenuSelection -Header $Header -Items $ConfirmMenuItems -Mode Single
 
     if($Result -contains "Yes") {
-      return $true
+      return $True
     }
 
     return $False
