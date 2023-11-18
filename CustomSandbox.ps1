@@ -123,6 +123,11 @@ if (!(Test-Path $UtilPath)) {
 $CacheFiles = Get-ChildItem -Path $LauncherCachePath -File -Recurse
 $CacheSize = Get-FriendlySize -MBytes (($CacheFiles | Measure-Object Length -Sum).Sum / 1024 / 1024)
 
+if ($Config.MemoryInMB) {
+  $XML.Configuration.MemoryInMB = $Config.MemoryInMB
+} else {
+  $XML.Configuration.MemoryInMB = "2048"
+}
 
 $MenuHeader = @"
 $AppName v$AppVersion
@@ -149,7 +154,7 @@ $MenuItems = @(
      -Order 2 `
      -Selected:($Config.vGPU)
   Get-MenuItem `
-     -Label "Set RAM amount" `
+     -Label "Set RAM Amount (Current: $($XML.Configuration.MemoryInMB)MB)" `
      -Value "CustomRam" `
      -Order 3 `
      -Selected:($Config.CustomRam)
@@ -192,26 +197,20 @@ $MenuItems = @(
 
 $SelectedOptions = Get-MenuSelection -Header $MenuHeader -Items $MenuItems -Mode Multi
 
-if ($Config.MemoryInMB) {
-  $XML.Configuration.MemoryInMB = $Config.MemoryInMB
-} else {
-  $XML.Configuration.MemoryInMB = "4096"
-}
-
 if ($SelectedOptions -contains 'CustomRam') {
 
   $RAMHeader = "Set maximum amount of RAM to allocate to sandbox:"
 
   $MaxFreeRam = [math]::Round((Get-CimInstance Win32_OperatingSystem | Select-Object FreePhysicalMemory).FreePhysicalMemory / 1024)
 
-  if ($MaxFreeRam -lt 1024) {
+  if ($MaxFreeRam -lt 2048) {
     Write-Error "Not enough free memory to run Windows Sandbox."
     return
   }
 
   $RAMItems = @()
   $RamOrder = 0
-  for ($RamVal = 1024; $RamVal -le $MaxFreeRam; $RamVal += 1024) {
+  for ($RamVal = 2048; $RamVal -le $MaxFreeRam; $RamVal += 1024) {
     $RAMItems += Get-MenuItem -Label (Get-FriendlySize -MBytes $RamVal) -Value $RamVal -Order $RamOrder
     $RamOrder++
   }
@@ -224,7 +223,6 @@ if ($SelectedOptions -contains 'CustomRam') {
   $Config | Add-Member -NotePropertyName 'MemoryInMB' -NotePropertyValue $CustomRam -Force
 } else {
   $Config | Add-Member -NotePropertyName 'CustomRam' -NotePropertyValue $False -Force
-  $Config | Add-Member -NotePropertyName 'MemoryInMB' -NotePropertyValue $False -Force
 }
 
 if ($SelectedOptions -contains 'ClearCache') {
