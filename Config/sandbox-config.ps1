@@ -1,8 +1,8 @@
 $ErrorActionPreference = 'Continue'
 $ProgressPreference = 'SilentlyContinue'
 
-. "$PSScriptRoot\Tasks.ps1"
-. "$PSScriptRoot\Helpers.ps1"
+. "$PSScriptRoot\Functions\Tasks.ps1"
+. "$PSScriptRoot\Functions\Common.ps1"
 
 $CSMountPath = $PSScriptRoot
 $OldWSMountPath = "C:\Users\WDAGUtilityAccount\Desktop\Config"

@@ -86,20 +86,24 @@ class Menu{
         if($this.CurrentIndex -gt $this.ScrollTop + $this.MaxHeight) {
           $this.ScrollTop++
         }
+        break;
       }
       $([ConsoleKey]::PageDown) {
         $this.CurrentIndex += $this.MaxHeight
         $this.ScrollTop += $this.MaxHeight
+        break;
       }
       $([ConsoleKey]::UpArrow) {
         $this.CurrentIndex--
         if($this.CurrentIndex -lt $this.ScrollTop) {
           $this.ScrollTop--
         }
+        break;
       }
       $([ConsoleKey]::PageUp) {
         $this.CurrentIndex -= $this.MaxHeight
         $this.ScrollTop -= $this.MaxHeight
+        break;
       }
       $([ConsoleKey]::Spacebar) {
         if ($this.Mode -eq 'Multi') {
@@ -111,6 +115,7 @@ class Menu{
         } else {
           return $true
         }
+        break;
       }
       $([ConsoleKey]::Enter) {
         return $true

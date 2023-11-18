@@ -15,9 +15,9 @@ $AppVersion = "1.2"
 try { Stop-Transcript | Out-Null } catch [System.InvalidOperationException]{}
 Start-Transcript -Path "$PSScriptRoot\CustomSandbox.log"
 
-. "$PSScriptRoot\Config\Tasks.ps1"
-. "$PSScriptRoot\Config\Menu.ps1"
-. "$PSScriptRoot\Config\Helpers.ps1"
+. "$PSScriptRoot\Config\Functions\Tasks.ps1"
+. "$PSScriptRoot\Config\Functions\Menu.ps1"
+. "$PSScriptRoot\Config\Functions\Common.ps1"
 
 $LauncherRootPath = $PSScriptRoot
 $LauncherMountPath = Join-Path $LauncherRootPath "Config"
