@@ -37,7 +37,9 @@ class MenuItem{
 }
 
 class Menu{
-  [ValidateNotNullOrEmpty()] [string]$Header
+  [string]$Title = $null
+  [string]$Subtitle  = $null
+  [string]$Prompt  = $null
   [ValidateNotNullOrEmpty()] [MenuItem[]]$Items
   [ValidateNotNullOrEmpty()] [string]$Mode
 
@@ -52,26 +54,42 @@ class Menu{
   hidden [bool]$ShowScroll = $false
   hidden [int]$IndexState = !$CurrentIndex
 
+
+  $TitleColor = [ConsoleColor]::Magenta
+  $SubtitleColor = [ConsoleColor]::Gray
+  $PromptColor = [ConsoleColor]::White
+
+  $InfoTextColor = [ConsoleColor]::Magenta
+
+  $HighlightColor = [ConsoleColor]::DarkRed
+  $SelectedColor = [ConsoleColor]::Green
+  $DependencyColor = [ConsoleColor]::DarkYellow
+  $ReadOnlyColor = [ConsoleColor]::DarkGray
+
+  $ScrollArrowColor = [ConsoleColor]::Yellow
+
   $DefaultForegroundColor = (Get-Host).UI.RawUI.ForegroundColor
   $DefaultBackgroundColor = (Get-Host).UI.RawUI.BackgroundColor
 
   $WindowSize = (Get-Host).UI.RawUI.WindowSize
 
-  Menu ([string]$Header,[MenuItem[]]$Items,[string]$Mode) {
-    $this.Header = $Header
-    $this.Items = $Items | Sort-Object -Property @{ Expression = "Order"; Descending = $false },@{ Expression = "Label"; Descending = $false }
-    $this.Mode = $Mode
-    $this.ScrollBarBuffer = [char[]]::New($Items.Count)
+  Menu ([string]$Title,[string]$Subtitle,[string]$Prompt,[MenuItem[]]$Items,[string]$Mode) {
+    $this.Init($Title,$Subtitle,$Prompt,$Items,$Mode)
   }
 
   hidden Init (
-    [string]$Header,
+    [string]$Title = $null,
+    [string]$Subtitle = $null,
+    [string]$Prompt = $null,
     [MenuItem[]]$Items,
     [string]$Mode
   ) {
-    $this.Items = $Items
-    $this.Header = $Header
+    $this.Title = $Title
+    $this.Subtitle = $Subtitle
+    $this.Prompt = $Prompt
+    $this.Items = $Items | Sort-Object -Property @{ Expression = "Order"; Descending = $false },@{ Expression = "Label"; Descending = $false }
     $this.Mode = $Mode
+    $this.ScrollBarBuffer = [char[]]::New($Items.Count)
   }
 
   hidden [MenuItem] GetCurrentItem () {
@@ -140,7 +158,20 @@ class Menu{
 
   hidden ScrollingCalculations () {
 
-    $this.MaxHeight = $this.WindowSize.Height - ($this.Header | Measure-Object -Line).Lines - 6
+    $HeaderLines = $null
+    if($this.Title) {
+      $HeaderLines += $this.Title + "`n"
+    }
+    if($this.Subtitle) {
+      $HeaderLines += $this.Subtitle + "`n"
+    }
+    if($this.Prompt) {
+      $HeaderLines += $this.Prompt + "`n"
+    }
+
+    $HeaderLines = $HeaderLines.Trim()
+
+    $this.MaxHeight = $this.WindowSize.Height - ($HeaderLines | Measure-Object -Line).Lines - 6
     $ItemCount = $this.Items.Count - 1
 
     if ($this.MaxHeight -lt 1) {
@@ -214,10 +245,20 @@ class Menu{
     if ($this.Mode -eq "Multi") {
       if ($Selected) {
         $Prefix = "[X]"
+        $ForegroundColor = $this.SelectedColor
       } elseif ($Dependency) {
         $Prefix = "[*]"
+        $ForegroundColor = $this.DependencyColor
       } else {
         $Prefix = "[ ]"
+      }
+      if($ReadOnly) {
+        $ForegroundColor = $this.ReadOnlyColor
+      }
+      if($CurrentItem) {
+        $Prefix = ">$Prefix<"
+      } else {
+        $Prefix = " $Prefix "
       }
     } else {
       if ($CurrentItem) {
@@ -232,17 +273,7 @@ class Menu{
     }
 
     if ($CurrentItem) {
-      $BackgroundColor = [ConsoleColor]::DarkRed
-    }
-
-    if ($this.Mode -eq "Multi") {
-      if ($Selected) {
-        $ForegroundColor = [ConsoleColor]::Green
-      } elseif ($Dependency) {
-        $ForegroundColor = [ConsoleColor]::DarkYellow
-      } elseif ($ReadOnly) {
-        $ForegroundColor = [ConsoleColor]::DarkGray
-      } 
+      $BackgroundColor = $this.HighlightColor
     }
 
     Write-Host $ItemString -ForegroundColor $ForegroundColor -BackgroundColor $BackgroundColor
@@ -250,13 +281,19 @@ class Menu{
 
   hidden Draw () {
 
-    $HeaderColor = [ConsoleColor]::Magenta
-
-    Write-Host $this.Header -ForegroundColor $HeaderColor
-    Write-Host
+    if($this.Title) {
+      Write-Host $this.Title -ForegroundColor $this.TitleColor
+    }
+    if($this.Subtitle) {
+      Write-Host $this.Subtitle -ForegroundColor $this.SubtitleColor
+    }
+    if($this.Prompt) {
+      Write-Host
+      Write-Host $this.Prompt -ForegroundColor $this.PromptColor
+    }
 
     if ($this.ShowScroll) {
-      Write-Host ("{0}" -f [char]9650) -ForegroundColor Yellow
+      Write-Host ("{0}" -f [char]9650) -ForegroundColor $this.ScrollArrowColor
     } else {
       Write-Host
     }
@@ -268,22 +305,22 @@ class Menu{
     }
 
     if ($this.ShowScroll) {
-      Write-Host ("{0}" -f [char]9660) -ForegroundColor Yellow
+      Write-Host ("{0}" -f [char]9660) -ForegroundColor $this.ScrollArrowColor
     } else {
       Write-Host
     }
 
     if ($this.Mode -eq "Multi") {
-      Write-Host -NoNewline "[SPACE]" -ForegroundColor Magenta
+      Write-Host -NoNewline "[SPACE]" -ForegroundColor $this.InfoTextColor
       Write-Host -NoNewline ":Select "
-      Write-Host -NoNewline "[ENTER]" -ForegroundColor Magenta
+      Write-Host -NoNewline "[ENTER]" -ForegroundColor $this.InfoTextColor
       Write-Host -NoNewline ":Confirm "
     } else {
-      Write-Host -NoNewline "[SPACE]/[ENTER]" -ForegroundColor Magenta
+      Write-Host -NoNewline "[SPACE]/[ENTER]" -ForegroundColor $this.InfoTextColor
       Write-Host -NoNewline ":Confirm "
     }
 
-    Write-Host -NoNewline "[ESC]" -ForegroundColor Magenta
+    Write-Host -NoNewline "[ESC]" -ForegroundColor $this.InfoTextColor
     Write-Host ":Exit"
 
   }
@@ -384,17 +421,19 @@ function Get-MenuItem {
 
 function Get-MenuSelection {
   param(
-    [Parameter(Mandatory)] [string]$Header,
+    [string]$Title = $null,
+    [string]$Subtitle = $null,
+    [string]$Prompt = $null,
     [Parameter(Mandatory)] [object[]]$Items,
     [ValidateSet("Single","Multi")] $Mode
   )
-  $menu = [Menu]::new($Header,$Items,$Mode)
+  $menu = [Menu]::new($Title,$Subtitle,$Prompt,$Items,$Mode)
   return $menu.GetSelections()
 }
 
 function Get-MenuConfirmation {
   param(
-    [Parameter(Mandatory)] [string]$Header
+    [string]$Prompt
   )
 
   $ConfirmMenuItems = @(
@@ -409,7 +448,7 @@ function Get-MenuConfirmation {
        -Order 1
     )
 
-    $Result = Get-MenuSelection -Header $Header -Items $ConfirmMenuItems -Mode Single
+    $Result = Get-MenuSelection -Prompt $Prompt -Items $ConfirmMenuItems -Mode Single
 
     if($Result -contains "Yes") {
       return $True

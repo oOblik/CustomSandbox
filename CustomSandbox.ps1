@@ -68,7 +68,7 @@ if (!(Test-Path $WSPath)) {
   $InstallWS = $False
 
   if (-not $ForceWSInstall) {
-    $InstallWS = Get-MenuConfirmation -Header "Windows Sandbox is not currently installed. Would you like to attempt to install it? (Elevation Required)"
+    $InstallWS = Get-MenuConfirmation -Prompt "Windows Sandbox is not currently installed. Would you like to attempt to install it? (Elevation Required)"
   }
 
   if ($InstallWS -or $ForceWSInstall) {
@@ -124,73 +124,71 @@ $WSConfig.SetMemoryInMB($RAMToAllocateIdeal)
 
 $FriendlyRAMToAllocate = Get-FriendlySize -MBytes $RAMToAllocateIdeal
 
-$MenuHeader = @"
-$AppName v$AppVersion
-If you want access to any utilities/files inside the sandbox, add them to the following directory:
-$UtilPath
+$MainMenu = @{
+  Title = "$AppName v$AppVersion"
+  Subtitle = "If you want access to any utilities/files inside the sandbox, add them to the following directory:`n$UtilPath"
+  Prompt = "Choose your options:"
+  Mode = "Multi"
+  Items = @(
+    Get-MenuItem `
+       -Label "Protected Mode" `
+       -Value "ProtectedClient" `
+       -Order 0 `
+       -Selected:($CSConfig.IsTrue("ProtectedClient"))
+    Get-MenuItem `
+       -Label "Networking" `
+       -Value "Networking" `
+       -Order 1 `
+       -Selected:($CSConfig.IsTrue("Networking"))
+    Get-MenuItem `
+       -Label "vGPU" `
+       -Value "vGPU" `
+       -Order 2 `
+       -Selected:($CSConfig.IsTrue("vGPU"))
+    Get-MenuItem `
+       -Label "Set RAM Amount (Current: $FriendlyRAMToAllocate)" `
+       -Value "CustomRam" `
+       -Order 3 `
+       -Selected:($CSConfig.IsTrue("CustomRam"))
+    Get-MenuItem `
+       -Label "Enable Clipboard Redirection" `
+       -Value "ClipboardRedirection" `
+       -Order 4 `
+       -Selected:($CSConfig.IsTrue("ClipboardRedirection"))
+    Get-MenuItem `
+       -Label "Enable Printer Redirection" `
+       -Value "PrinterRedirection" `
+       -Order 5 `
+       -Selected:($CSConfig.IsTrue("PrinterRedirection"))
+    Get-MenuItem `
+       -Label "Enable Audio Input" `
+       -Value "AudioInput" `
+       -Order 6 `
+       -Selected:($CSConfig.IsTrue("AudioInput"))
+    Get-MenuItem `
+       -Label "Enable Video Input" `
+       -Value "VideoInput" `
+       -Order 7 `
+       -Selected:($CSConfig.IsTrue("VideoInput"))
+    Get-MenuItem `
+       -Label "Update Cached Installers" `
+       -Value "UpdateCache" `
+       -Order 8 `
+       -Selected:($CSConfig.IsTrue("UpdateCache"))
+    Get-MenuItem `
+       -Label "Clear Cache (Size: $CacheSize)" `
+       -Value "ClearCache" `
+       -Order 9 `
+       -Selected:($CSConfig.IsTrue("ClearCache"))
+    Get-MenuItem `
+       -Label "Save Configuration" `
+       -Value "SaveConfig" `
+       -Order 10 `
+       -Selected:($CSConfig.IsTrue("SaveConfig"))
+  ) 
+}
 
-Choose your options:
-"@
-
-$MenuItems = @(
-  Get-MenuItem `
-     -Label "Protected Mode" `
-     -Value "ProtectedClient" `
-     -Order 0 `
-     -Selected:($CSConfig.IsTrue("ProtectedClient"))
-  Get-MenuItem `
-     -Label "Networking" `
-     -Value "Networking" `
-     -Order 1 `
-     -Selected:($CSConfig.IsTrue("Networking"))
-  Get-MenuItem `
-     -Label "vGPU" `
-     -Value "vGPU" `
-     -Order 2 `
-     -Selected:($CSConfig.IsTrue("vGPU"))
-  Get-MenuItem `
-     -Label "Set RAM Amount (Current: $FriendlyRAMToAllocate)" `
-     -Value "CustomRam" `
-     -Order 3 `
-     -Selected:($CSConfig.IsTrue("CustomRam"))
-  Get-MenuItem `
-     -Label "Enable Clipboard Redirection" `
-     -Value "ClipboardRedirection" `
-     -Order 4 `
-     -Selected:($CSConfig.IsTrue("ClipboardRedirection"))
-  Get-MenuItem `
-     -Label "Enable Printer Redirection" `
-     -Value "PrinterRedirection" `
-     -Order 5 `
-     -Selected:($CSConfig.IsTrue("PrinterRedirection"))
-  Get-MenuItem `
-     -Label "Enable Audio Input" `
-     -Value "AudioInput" `
-     -Order 6 `
-     -Selected:($CSConfig.IsTrue("AudioInput"))
-  Get-MenuItem `
-     -Label "Enable Video Input" `
-     -Value "VideoInput" `
-     -Order 7 `
-     -Selected:($CSConfig.IsTrue("VideoInput"))
-  Get-MenuItem `
-     -Label "Update Cached Installers" `
-     -Value "UpdateCache" `
-     -Order 8 `
-     -Selected:($CSConfig.IsTrue("UpdateCache"))
-  Get-MenuItem `
-     -Label "Clear Cache (Size: $CacheSize)" `
-     -Value "ClearCache" `
-     -Order 9 `
-     -Selected:($CSConfig.IsTrue("ClearCache"))
-  Get-MenuItem `
-     -Label "Save Configuration" `
-     -Value "SaveConfig" `
-     -Order 10 `
-     -Selected:($CSConfig.IsTrue("SaveConfig"))
-)
-
-$SelectedOptions = Get-MenuSelection -Header $MenuHeader -Items $MenuItems -Mode Multi
+$SelectedOptions = Get-MenuSelection @MainMenu
 
 if ($SelectedOptions -contains 'CustomRam') {
 
@@ -203,7 +201,7 @@ if ($SelectedOptions -contains 'CustomRam') {
     $RamOrder++
   }
 
-  $CustomRam = Get-MenuSelection -Header $RAMHeader -Items $RAMItems -Mode Single
+  $CustomRam = Get-MenuSelection -Prompt $RAMHeader -Items $RAMItems -Mode Single
 
   $CSConfig.SetProperty("CustomRam", $True)
   $CSConfig.SetProperty("MemoryInMB", $CustomRam)
@@ -234,7 +232,7 @@ foreach ($Task in $TaskCollection.Tasks) {
      -Selected:($CSConfig.GetProperty("Tasks").Value -contains $Task.ID)
 }
 
-$SelectedTasks = Get-MenuSelection -Header $TaskHeader -Items $TaskItems -Mode Multi
+$SelectedTasks = Get-MenuSelection -Prompt $TaskHeader -Items $TaskItems -Mode Multi
 
 Clear-Host
 
@@ -283,7 +281,7 @@ Pause
 $WSProcess = Get-Process -Name "WindowsSandbox" -ErrorAction SilentlyContinue
 if($WSProcess) {
 
-  $KillWS = Get-MenuConfirmation -Header "Windows Sandbox is currently running. Only one instance can be run at a time. Would you like to close it?"
+  $KillWS = Get-MenuConfirmation -Prompt "Windows Sandbox is currently running. Only one instance can be run at a time. Would you like to close it?"
 
   if($KillWS) {
     Write-Host "Killing Windows Sandbox processes..."
