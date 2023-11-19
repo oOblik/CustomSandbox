@@ -15,6 +15,7 @@ $AppVersion = "1.2"
 try { Stop-Transcript | Out-Null } catch [System.InvalidOperationException]{}
 Start-Transcript -Path "$PSScriptRoot\CustomSandbox.log"
 
+. "$PSScriptRoot\Config\Functions\Configuration.ps1"
 . "$PSScriptRoot\Config\Functions\Tasks.ps1"
 . "$PSScriptRoot\Config\Functions\Menu.ps1"
 . "$PSScriptRoot\Config\Functions\Common.ps1"
@@ -23,8 +24,33 @@ $LauncherRootPath = $PSScriptRoot
 $LauncherMountPath = Join-Path $LauncherRootPath "Config"
 $LauncherCachePath = Join-Path $LauncherMountPath "Cache"
 
+$RAMToAllocateMin = 2048
+$RAMToAllocateIdeal = 4096
+
 $CSMountPath = "C:\Config"
 $CSCachePath = $LauncherCachePath
+$CSConfigPath = "$LauncherRootPath\config.json"
+$WSConfigPath = Join-Path $LauncherCachePath "$AppName.wsb"
+
+$WSConfig = New-WSConfig -Path $WSConfigPath
+$WSConfig.SetHostFolder($LauncherMountPath)
+$WSConfig.SetSandboxFolder($CSMountPath)
+$WSConfig.SetLogonCommand("PowerShell -ExecutionPolicy Unrestricted -WindowStyle Hidden -Command `"if(Test-Path C:\Config\sandbox-config.ps1) { start powershell -WindowStyle Hidden {-file C:\Config\sandbox-config.ps1 } } else { start powershell -WindowStyle Hidden {-file C:\Users\WDAGUtilityAccount\Desktop\Config\sandbox-config.ps1 } }`"")
+
+$CSConfig = New-CSConfig -Path $CSConfigPath
+
+if (Test-Path $CSConfigPath) {
+  $CSConfig.Import()
+}
+
+if (!(Test-Path $LauncherCachePath)) {
+  New-Item -Path $LauncherCachePath -ItemType Directory -Force | Out-Null
+}
+
+$UtilPath = Join-Path $LauncherMountPath "Utilities"
+if (!(Test-Path $UtilPath)) {
+  New-Item -Path $UtilPath -ItemType Directory -Force | Out-Null
+}
 
 if (-not $SkipCompatCheck) {
   $OSVersion = [System.Environment]::OSVersion.Version
@@ -73,61 +99,30 @@ if (!(Test-Path $WSPath)) {
   
 }
 
-$Config = @{}
-$Config.Tasks = @()
-
-$ConfigPath = "$LauncherRootPath\config.json"
-if (Test-Path $ConfigPath) {
-  try {
-    $Config = Get-Content -Path $ConfigPath | ConvertFrom-Json
-    Write-Host "Configuration loaded from $ConfigPath"
-  } catch {
-    Write-Error "Failed to load configuration found at $ConfigPath"
-  }
-}
-
-$WSConfig = @"
-<Configuration>
-    <VGpu>Disable</VGpu>
-    <Networking>Disable</Networking>
-    <ProtectedClient>Disable</ProtectedClient>
-    <MappedFolders>
-        <MappedFolder>
-            <HostFolder></HostFolder>
-            <SandboxFolder>C:\Config</SandboxFolder>
-            <ReadOnly>true</ReadOnly>
-        </MappedFolder>
-    </MappedFolders>
-    <ClipboardRedirection>false</ClipboardRedirection>
-    <PrinterRedirection>Disable</PrinterRedirection>
-    <AudioInput>Enable</AudioInput>
-    <VideoInput>Enable</VideoInput>
-    <MemoryInMB></MemoryInMB>
-    <LogonCommand>
-        <Command>PowerShell -ExecutionPolicy Unrestricted -WindowStyle Hidden -Command "if(Test-Path C:\Config\sandbox-config.ps1) { start powershell -WindowStyle Hidden {-file C:\Config\sandbox-config.ps1 } } else { start powershell -WindowStyle Hidden {-file C:\Users\WDAGUtilityAccount\Desktop\Config\sandbox-config.ps1 } }"</Command>
-    </LogonCommand>
-</Configuration>
-"@
-
-$XML = [xml]$WSConfig
-
-if (!(Test-Path $LauncherCachePath)) {
-  New-Item -Path $LauncherCachePath -ItemType Directory -Force | Out-Null
-}
-
-$UtilPath = Join-Path $LauncherMountPath "Utilities"
-if (!(Test-Path $UtilPath)) {
-  New-Item -Path $UtilPath -ItemType Directory -Force | Out-Null
-}
-
 $CacheFiles = Get-ChildItem -Path $LauncherCachePath -File -Recurse
 $CacheSize = Get-FriendlySize -MBytes (($CacheFiles | Measure-Object Length -Sum).Sum / 1024 / 1024)
 
-if ($Config.MemoryInMB) {
-  $XML.Configuration.MemoryInMB = $Config.MemoryInMB
-} else {
-  $XML.Configuration.MemoryInMB = "2048"
+$MaxFreeRam = [Math]::Round((Get-CimInstance Win32_OperatingSystem | Select-Object FreePhysicalMemory).FreePhysicalMemory / 1024)
+
+if ($MaxFreeRam -lt $RAMToAllocateMin) {
+  Write-Host "Not enough free memory to run Windows Sandbox." -ForegroundColor Red
+  Exit
 }
+
+$RAMTarget = [int]$CSConfig.GetProperty("MemoryInMB").Value
+
+if($RAMTarget -le $MaxFreeRam -and $RAMTarget -ge $RAMToAllocateMin) {
+  $RAMToAllocateIdeal = $RAMTarget
+} else {
+  if ($MaxFreeRam -lt $RAMToAllocateIdeal) {
+    $RAMToAllocateIdeal = $RAMToAllocateMin
+  }
+}
+
+$CSConfig.SetProperty("MemoryInMB", $RAMToAllocateIdeal)
+$WSConfig.SetMemoryInMB($RAMToAllocateIdeal)
+
+$FriendlyRAMToAllocate = Get-FriendlySize -MBytes $RAMToAllocateIdeal
 
 $MenuHeader = @"
 $AppName v$AppVersion
@@ -140,59 +135,59 @@ Choose your options:
 $MenuItems = @(
   Get-MenuItem `
      -Label "Protected Mode" `
-     -Value "ProtectedMode" `
+     -Value "ProtectedClient" `
      -Order 0 `
-     -Selected:($Config.ProtectedMode)
+     -Selected:($CSConfig.IsTrue("ProtectedClient"))
   Get-MenuItem `
      -Label "Networking" `
      -Value "Networking" `
      -Order 1 `
-     -Selected:($Config.Networking)
+     -Selected:($CSConfig.IsTrue("Networking"))
   Get-MenuItem `
      -Label "vGPU" `
      -Value "vGPU" `
      -Order 2 `
-     -Selected:($Config.vGPU)
+     -Selected:($CSConfig.IsTrue("vGPU"))
   Get-MenuItem `
-     -Label "Set RAM Amount (Current: $($XML.Configuration.MemoryInMB)MB)" `
+     -Label "Set RAM Amount (Current: $FriendlyRAMToAllocate)" `
      -Value "CustomRam" `
      -Order 3 `
-     -Selected:($Config.CustomRam)
+     -Selected:($CSConfig.IsTrue("CustomRam"))
   Get-MenuItem `
      -Label "Enable Clipboard Redirection" `
-     -Value "Clipboard" `
+     -Value "ClipboardRedirection" `
      -Order 4 `
-     -Selected:($Config.Clipboard)
+     -Selected:($CSConfig.IsTrue("ClipboardRedirection"))
   Get-MenuItem `
      -Label "Enable Printer Redirection" `
      -Value "PrinterRedirection" `
      -Order 5 `
-     -Selected:($Config.PrinterRedirection)
+     -Selected:($CSConfig.IsTrue("PrinterRedirection"))
   Get-MenuItem `
-     -Label "Disable Audio Input" `
-     -Value "DisableAudioInput" `
+     -Label "Enable Audio Input" `
+     -Value "AudioInput" `
      -Order 6 `
-     -Selected:($Config.DisableAudioInput)
+     -Selected:($CSConfig.IsTrue("AudioInput"))
   Get-MenuItem `
-     -Label "Disable Video Input" `
-     -Value "DisableVideoInput" `
+     -Label "Enable Video Input" `
+     -Value "VideoInput" `
      -Order 7 `
-     -Selected:($Config.DisableVideoInput)
+     -Selected:($CSConfig.IsTrue("VideoInput"))
   Get-MenuItem `
      -Label "Update Cached Installers" `
      -Value "UpdateCache" `
      -Order 8 `
-     -Selected:($Config.UpdateCache)
+     -Selected:($CSConfig.IsTrue("UpdateCache"))
   Get-MenuItem `
      -Label "Clear Cache (Size: $CacheSize)" `
      -Value "ClearCache" `
      -Order 9 `
-     -Selected:($Config.ClearCache)
+     -Selected:($CSConfig.IsTrue("ClearCache"))
   Get-MenuItem `
      -Label "Save Configuration" `
      -Value "SaveConfig" `
      -Order 10 `
-     -Selected:($Config.SaveConfig)
+     -Selected:($CSConfig.IsTrue("SaveConfig"))
 )
 
 $SelectedOptions = Get-MenuSelection -Header $MenuHeader -Items $MenuItems -Mode Multi
@@ -200,13 +195,6 @@ $SelectedOptions = Get-MenuSelection -Header $MenuHeader -Items $MenuItems -Mode
 if ($SelectedOptions -contains 'CustomRam') {
 
   $RAMHeader = "Set maximum amount of RAM to allocate to sandbox:"
-
-  $MaxFreeRam = [math]::Round((Get-CimInstance Win32_OperatingSystem | Select-Object FreePhysicalMemory).FreePhysicalMemory / 1024)
-
-  if ($MaxFreeRam -lt 2048) {
-    Write-Error "Not enough free memory to run Windows Sandbox."
-    return
-  }
 
   $RAMItems = @()
   $RamOrder = 0
@@ -217,12 +205,11 @@ if ($SelectedOptions -contains 'CustomRam') {
 
   $CustomRam = Get-MenuSelection -Header $RAMHeader -Items $RAMItems -Mode Single
 
-  $XML.Configuration.MemoryInMB = $CustomRam
-
-  $Config | Add-Member -NotePropertyName 'CustomRam' -NotePropertyValue $True -Force
-  $Config | Add-Member -NotePropertyName 'MemoryInMB' -NotePropertyValue $CustomRam -Force
+  $CSConfig.SetProperty("CustomRam", $True)
+  $CSConfig.SetProperty("MemoryInMB", $CustomRam)
+  $WSConfig.SetMemoryInMB($CustomRam)
 } else {
-  $Config | Add-Member -NotePropertyName 'CustomRam' -NotePropertyValue $False -Force
+  $CSConfig.SetProperty("CustomRam", $False)
 }
 
 if ($SelectedOptions -contains 'ClearCache') {
@@ -230,14 +217,8 @@ if ($SelectedOptions -contains 'ClearCache') {
   Get-ChildItem -Path $LauncherCachePath | Remove-Item -Recurse -Force
 }
 
-if ($SelectedOptions -contains 'UpdateCache') {
-  $ForceCache = $True
-  $Config | Add-Member -NotePropertyName 'UpdateCache' -NotePropertyValue $True -Force
-} else {
-  $ForceCache = $False
-  $Config | Add-Member -NotePropertyName 'UpdateCache' -NotePropertyValue $False -Force
-}
-
+$ForceCache = ($SelectedOptions -contains 'UpdateCache')
+$CSConfig.SetProperty("UpdateCache", $ForceCache)
 
 $TaskPath = Join-Path $LauncherMountPath "Tasks"
 $TaskCollection = New-CustomSandboxTaskCollection -Path $TaskPath
@@ -250,14 +231,14 @@ foreach ($Task in $TaskCollection.Tasks) {
      -Label $Task.Name `
      -Value $Task.ID `
      -Depends $Task.Dependencies `
-     -Selected:($Config.Tasks -contains $Task.ID)
+     -Selected:($CSConfig.GetProperty("Tasks").Value -contains $Task.ID)
 }
 
 $SelectedTasks = Get-MenuSelection -Header $TaskHeader -Items $TaskItems -Mode Multi
 
 Clear-Host
 
-$Config.Tasks = $SelectedTasks
+$CSConfig.SetProperty("Tasks", $SelectedTasks)
 
 $AllTasks = $TaskCollection.GetTasksWithDepFromList($SelectedTasks)
 
@@ -271,69 +252,31 @@ $SelectedTasks | ConvertTo-Json | Set-Content -Path "$LauncherCachePath\EnabledT
 
 Write-Host "Getting CustomSandbox Configuration..."
 
-$XML.Configuration.MappedFolders.MappedFolder.HostFolder = [string]$LauncherMountPath
+$WSConfigToggles = @(
+  'ProtectedClient',
+  'Networking'
+  'vGPU',
+  'ClipboardRedirection',
+  'PrinterRedirection',
+  'AudioInput',
+  'VideoInput'
+)
 
-if ($SelectedOptions -contains 'ProtectedMode') {
-  $XML.Configuration.ProtectedClient = "Enable"
-  $Config | Add-Member -NotePropertyName 'ProtectedMode' -NotePropertyValue $True -Force
-} else {
-  $Config | Add-Member -NotePropertyName 'ProtectedMode' -NotePropertyValue $False -Force
-}
-
-if ($SelectedOptions -contains 'Networking') {
-  $XML.Configuration.Networking = "Enable"
-  $Config | Add-Member -NotePropertyName 'Networking' -NotePropertyValue $True -Force
-} else {
-  $Config | Add-Member -NotePropertyName 'Networking' -NotePropertyValue $False -Force
-}
-
-if ($SelectedOptions -contains 'vGPU') {
-  $XML.Configuration.vGPU = "Enable"
-  $Config | Add-Member -NotePropertyName 'vGPU' -NotePropertyValue $True -Force
-} else {
-  $Config | Add-Member -NotePropertyName 'vGPU' -NotePropertyValue $False -Force
-}
-
-if ($SelectedOptions -contains 'Clipboard') {
-  $XML.Configuration.ClipboardRedirection = "true"
-  $Config | Add-Member -NotePropertyName 'Clipboard' -NotePropertyValue $True -Force
-} else {
-  $Config | Add-Member -NotePropertyName 'Clipboard' -NotePropertyValue $False -Force
-}
-
-if ($SelectedOptions -contains 'PrinterRedirection') {
-  $XML.Configuration.PrinterRedirection = "Enable"
-  $Config | Add-Member -NotePropertyName 'PrinterRedirection' -NotePropertyValue $True -Force
-} else {
-  $Config | Add-Member -NotePropertyName 'PrinterRedirection' -NotePropertyValue $False -Force
-}
-
-if ($SelectedOptions -contains 'DisableAudioInput') {
-  $XML.Configuration.AudioInput = "Disable"
-  $Config | Add-Member -NotePropertyName 'DisableAudioInput' -NotePropertyValue $True -Force
-} else {
-  $Config | Add-Member -NotePropertyName 'DisableAudioInput' -NotePropertyValue $False -Force
-}
-
-if ($SelectedOptions -contains 'DisableVideoInput') {
-  $XML.Configuration.VideoInput = "Disable"
-  $Config | Add-Member -NotePropertyName 'DisableVideoInput' -NotePropertyValue $True -Force
-} else {
-  $Config | Add-Member -NotePropertyName 'DisableVideoInput' -NotePropertyValue $False -Force
+$WSConfigToggles | ForEach-Object {
+  $PropertyEnabled = ($SelectedOptions -contains $_) 
+  $CSConfig.SetProperty($_, $PropertyEnabled)
+  $WSConfig.SetPropertyToggle($_, $PropertyEnabled)
 }
 
 if ($SelectedOptions -contains 'SaveConfig') {
-  Write-Host "Writing CustomSandbox Configuration to $ConfigPath..."
-  $Config | Add-Member -NotePropertyName 'SaveConfig' -NotePropertyValue $True -Force
-  $Config | Add-Member -NotePropertyName 'Version' -NotePropertyValue $Version -Force
-  $Config | ConvertTo-Json | Set-Content -Path $ConfigPath -Encoding UTF8
-} else {
-  $Config | Add-Member -NotePropertyName 'SaveConfig' -NotePropertyValue $False -Force
+  Write-Host "Saving CustomSandbox Configuration..."
+  $CSConfig.SetProperty("SaveConfig", $True)
+  $CSConfig.SetProperty("Version", $AppVersion)
+  $CSConfig.Export()
 }
 
 Write-Host "Writing Windows Sandbox Configuration..."
-$WinSandboxConfig = Join-Path $LauncherCachePath "$AppName.wsb"
-$XML.Save($WinSandboxConfig)
+$WSConfig.Export()
 
 Pause
 
@@ -355,6 +298,6 @@ if($WSProcess) {
 }
 
 Write-Host "Launching Windows Sandbox..."
-Invoke-Item $WinSandboxConfig
+Invoke-Item $WSConfigPath
 
 Stop-Transcript
