@@ -2,5 +2,7 @@
 
 Config/Cache/*
 Config/Utilities/*
+Config/Tasks/*.ps1
+Config/Tasks/*.json
 config.json
 *.log
