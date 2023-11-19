@@ -48,7 +48,7 @@ function New-CustomSandboxTask {
     [object]$Vars = @{}
   )
 
-  return [CustomSandboxTask]::new($ID,$Name,$Type,$Dependencies,$Requirements,$Script,$Vars)
+  return [CustomSandboxTask]::New($ID,$Name,$Type,$Dependencies,$Requirements,$Script,$Vars)
 }
 
 class CustomSandboxTaskCollection{
@@ -147,7 +147,7 @@ function New-CustomSandboxTaskCollection {
     [string]$Path
   )
 
-  $TaskCollection = [CustomSandboxTaskCollection]::new()
+  $TaskCollection = [CustomSandboxTaskCollection]::New()
   $TaskCollection.LoadFromDirectory($Path)
 
   return $TaskCollection

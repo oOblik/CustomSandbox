@@ -47,27 +47,27 @@ function Invoke-ExecuteTaskList {
 </toast>
 "@
 
-    $XmlDocument = [Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime]::new()
+    $XmlDocument = [Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime]::New()
     $XmlDocument.loadXml($xml)
-    $ToastNotification = [Windows.UI.Notifications.ToastNotification, Windows.UI.Notifications, ContentType = WindowsRuntime]::new($XmlDocument)
+    $ToastNotification = [Windows.UI.Notifications.ToastNotification, Windows.UI.Notifications, ContentType = WindowsRuntime]::New($XmlDocument)
     $ToastNotification.Tag = "CustomSandbox"
-    $Dictionary = [System.Collections.Generic.Dictionary[String, String]]::new()
+    $Dictionary = [System.Collections.Generic.Dictionary[String, String]]::New()
     $Dictionary.Add('progressTitle','')
     $Dictionary.Add('progressValue','0')
     $Dictionary.Add('progressValueString','Task 0/0')
     $Dictionary.Add('progressStatus',$Type)
-    $ToastNotification.Data = [Windows.UI.Notifications.NotificationData]::new($Dictionary)
+    $ToastNotification.Data = [Windows.UI.Notifications.NotificationData]::New($Dictionary)
     $ToastNotification.Data.SequenceNumber = 1
     $AppId = '{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}\WindowsPowerShell\v1.0\powershell.exe'
     [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime]::CreateToastNotifier($AppId).Show($ToastNotification)
 
     for ($Task = 0; $Task -lt $TaskList.Count; $Task++) {
       Write-Host "Running Task $($TaskList[$Task].Name)..."
-      $Dictionary = [System.Collections.Generic.Dictionary[String, String]]::new()
+      $Dictionary = [System.Collections.Generic.Dictionary[String, String]]::New()
       $Dictionary.Add('progressTitle',$TaskList[$Task].Name)
       $Dictionary.Add('progressValue',($Task + 1) / $TaskList.Count)
       $Dictionary.Add('progressValueString',"Task $($Task+1)/$($TaskList.Count)")
-      $NotificationData = [Windows.UI.Notifications.NotificationData]::new($Dictionary)
+      $NotificationData = [Windows.UI.Notifications.NotificationData]::New($Dictionary)
       $NotificationData.SequenceNumber = 2
       [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($AppId).Update($NotificationData,$AppName)
 

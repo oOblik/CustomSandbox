@@ -416,7 +416,7 @@ function Get-MenuItem {
     [string[]]$Depends = @()
 
   )
-  [MenuItem]::new($Label,$Value,$Selected.IsPresent,$Info,$Order,$ReadOnly.IsPresent,$Depends)
+  [MenuItem]::New($Label,$Value,$Selected.IsPresent,$Info,$Order,$ReadOnly.IsPresent,$Depends)
 }
 
 function Get-MenuSelection {
@@ -427,7 +427,7 @@ function Get-MenuSelection {
     [Parameter(Mandatory)] [object[]]$Items,
     [ValidateSet("Single","Multi")] $Mode
   )
-  $menu = [Menu]::new($Title,$Subtitle,$Prompt,$Items,$Mode)
+  $menu = [Menu]::New($Title,$Subtitle,$Prompt,$Items,$Mode)
   return $menu.GetSelections()
 }
 

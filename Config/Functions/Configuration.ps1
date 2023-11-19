@@ -1,22 +1,24 @@
 class CSConfig {
     [object]$Config = @{}
     [string]$Path = ".\config.json"
+    [string]$Version
 
     CSConfig (
         [object]$Config, 
-        [string]$Path
+        [string]$Path,
+        [string]$Version
     ) {
-        $this.Config = $Config
-        $this.Path = $Path
-        $this.Init($Config,$Path);
+        $this.Init($Config,$Path,$Version);
     }
 
     hidden Init (
         [object]$Config, 
-        [string]$Path
+        [string]$Path,
+        [string]$Version
     ) {
         $this.Config = $Config
         $this.Path = $Path
+        $this.Version = $Version
     }
 
     [void] Import () {
@@ -34,6 +36,7 @@ class CSConfig {
 
     [void] Export () {
         try {
+            $this.SetProperty("Version", $this.Version)
             $this.Config | ConvertTo-Json | Set-Content -Path $this.Path -Encoding UTF8
         } catch {
             Write-Error "Error exporting configuration to $($this.Path). $_"
@@ -69,10 +72,11 @@ class CSConfig {
 function New-CSConfig {
     param(
         [object]$Config = @{}, 
-        [string]$Path = ".\config.json"
+        [string]$Path = ".\config.json",
+        [string]$Version
     )
 
-    return [CSConfig]::New($Config, $Path)
+    return [CSConfig]::New($Config, $Path, $Version)
 }
 
 class WSConfig {
@@ -103,7 +107,6 @@ class WSConfig {
     WSConfig (
         [string]$Path
     ) {
-        $this.Path = $Path
         $this.Init($Path);
     }
 

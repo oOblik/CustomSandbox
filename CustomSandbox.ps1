@@ -2,6 +2,7 @@
 
 [CmdletBinding()]
 param(
+  [Parameter(Mandatory=$False)][string]$RunConfig = $null,
   [Parameter(Mandatory=$False)][switch]$ForceWSInstall,
   [Parameter(Mandatory=$False)][switch]$SkipCompatCheck
 )
@@ -23,25 +24,46 @@ Start-Transcript -Path "$PSScriptRoot\CustomSandbox.log"
 $LauncherRootPath = $PSScriptRoot
 $LauncherMountPath = Join-Path $LauncherRootPath "Config"
 $LauncherCachePath = Join-Path $LauncherMountPath "Cache"
-
-$RAMToAllocateMin = 2048
-$RAMToAllocateIdeal = 4096
+$LauncherTasksPath = Join-Path $LauncherMountPath "Tasks"
 
 $CSMountPath = "C:\Config"
 $CSCachePath = $LauncherCachePath
 $CSConfigPath = "$LauncherRootPath\config.json"
 $WSConfigPath = Join-Path $LauncherCachePath "$AppName.wsb"
 
+$RAMToAllocateMin = 2048
+$RAMToAllocateIdeal = 4096
+
+$ConfigToggles = @(
+  'ProtectedClient',
+  'Networking'
+  'vGPU',
+  'ClipboardRedirection',
+  'PrinterRedirection',
+  'AudioInput',
+  'VideoInput'
+)
+
 $WSConfig = New-WSConfig -Path $WSConfigPath
 $WSConfig.SetHostFolder($LauncherMountPath)
 $WSConfig.SetSandboxFolder($CSMountPath)
 $WSConfig.SetLogonCommand("PowerShell -ExecutionPolicy Unrestricted -WindowStyle Hidden -Command `"if(Test-Path C:\Config\sandbox-config.ps1) { start powershell -WindowStyle Hidden {-file C:\Config\sandbox-config.ps1 } } else { start powershell -WindowStyle Hidden {-file C:\Users\WDAGUtilityAccount\Desktop\Config\sandbox-config.ps1 } }`"")
 
-$CSConfig = New-CSConfig -Path $CSConfigPath
+
+if($RunConfig) {
+  $CSConfigPath = $RunConfig
+}
+
+$CSConfig = New-CSConfig -Path $CSConfigPath -Version $AppVersion
 
 if (Test-Path $CSConfigPath) {
   $CSConfig.Import()
+} elseif ($RunConfig) {
+  Write-Error "Configuration not found at $CSConfigPath."
+  Exit
 }
+
+$TaskCollection = New-CustomSandboxTaskCollection -Path $LauncherTasksPath
 
 if (!(Test-Path $LauncherCachePath)) {
   New-Item -Path $LauncherCachePath -ItemType Directory -Force | Out-Null
@@ -99,9 +121,6 @@ if (!(Test-Path $WSPath)) {
   
 }
 
-$CacheFiles = Get-ChildItem -Path $LauncherCachePath -File -Recurse
-$CacheSize = Get-FriendlySize -MBytes (($CacheFiles | Measure-Object Length -Sum).Sum / 1024 / 1024)
-
 $MaxFreeRam = [Math]::Round((Get-CimInstance Win32_OperatingSystem | Select-Object FreePhysicalMemory).FreePhysicalMemory / 1024)
 
 if ($MaxFreeRam -lt $RAMToAllocateMin) {
@@ -122,155 +141,150 @@ if($RAMTarget -le $MaxFreeRam -and $RAMTarget -ge $RAMToAllocateMin) {
 $CSConfig.SetProperty("MemoryInMB", $RAMToAllocateIdeal)
 $WSConfig.SetMemoryInMB($RAMToAllocateIdeal)
 
-$FriendlyRAMToAllocate = Get-FriendlySize -MBytes $RAMToAllocateIdeal
+if(-not $RunConfig) {
+  $FriendlyRAMToAllocate = Get-FriendlySize -MBytes $RAMToAllocateIdeal
 
-$MainMenu = @{
-  Title = "$AppName v$AppVersion"
-  Subtitle = "If you want access to any utilities/files inside the sandbox, add them to the following directory:`n$UtilPath"
-  Prompt = "Choose your options:"
-  Mode = "Multi"
-  Items = @(
-    Get-MenuItem `
-       -Label "Protected Mode" `
-       -Value "ProtectedClient" `
-       -Order 0 `
-       -Selected:($CSConfig.IsTrue("ProtectedClient"))
-    Get-MenuItem `
-       -Label "Networking" `
-       -Value "Networking" `
-       -Order 1 `
-       -Selected:($CSConfig.IsTrue("Networking"))
-    Get-MenuItem `
-       -Label "vGPU" `
-       -Value "vGPU" `
-       -Order 2 `
-       -Selected:($CSConfig.IsTrue("vGPU"))
-    Get-MenuItem `
-       -Label "Set RAM Amount (Current: $FriendlyRAMToAllocate)" `
-       -Value "CustomRam" `
-       -Order 3 `
-       -Selected:($CSConfig.IsTrue("CustomRam"))
-    Get-MenuItem `
-       -Label "Enable Clipboard Redirection" `
-       -Value "ClipboardRedirection" `
-       -Order 4 `
-       -Selected:($CSConfig.IsTrue("ClipboardRedirection"))
-    Get-MenuItem `
-       -Label "Enable Printer Redirection" `
-       -Value "PrinterRedirection" `
-       -Order 5 `
-       -Selected:($CSConfig.IsTrue("PrinterRedirection"))
-    Get-MenuItem `
-       -Label "Enable Audio Input" `
-       -Value "AudioInput" `
-       -Order 6 `
-       -Selected:($CSConfig.IsTrue("AudioInput"))
-    Get-MenuItem `
-       -Label "Enable Video Input" `
-       -Value "VideoInput" `
-       -Order 7 `
-       -Selected:($CSConfig.IsTrue("VideoInput"))
-    Get-MenuItem `
-       -Label "Update Cached Installers" `
-       -Value "UpdateCache" `
-       -Order 8 `
-       -Selected:($CSConfig.IsTrue("UpdateCache"))
-    Get-MenuItem `
-       -Label "Clear Cache (Size: $CacheSize)" `
-       -Value "ClearCache" `
-       -Order 9 `
-       -Selected:($CSConfig.IsTrue("ClearCache"))
-    Get-MenuItem `
-       -Label "Save Configuration" `
-       -Value "SaveConfig" `
-       -Order 10 `
-       -Selected:($CSConfig.IsTrue("SaveConfig"))
-  ) 
-}
+  $CacheFiles = Get-ChildItem -Path $LauncherCachePath -File -Recurse
+  $CacheSize = Get-FriendlySize -MBytes (($CacheFiles | Measure-Object Length -Sum).Sum / 1024 / 1024)
 
-$SelectedOptions = Get-MenuSelection @MainMenu
-
-if ($SelectedOptions -contains 'CustomRam') {
-
-  $RAMHeader = "Set maximum amount of RAM to allocate to sandbox:"
-
-  $RAMItems = @()
-  $RamOrder = 0
-  for ($RamVal = 2048; $RamVal -le $MaxFreeRam; $RamVal += 1024) {
-    $RAMItems += Get-MenuItem -Label (Get-FriendlySize -MBytes $RamVal) -Value $RamVal -Order $RamOrder
-    $RamOrder++
+  $MainMenu = @{
+    Title = "$AppName v$AppVersion"
+    Subtitle = "If you want access to any utilities/files inside the sandbox, add them to the following directory:`n$UtilPath"
+    Prompt = "Choose your options:"
+    Mode = "Multi"
+    Items = @(
+      Get-MenuItem `
+        -Label "Protected Mode" `
+        -Value "ProtectedClient" `
+        -Order 0 `
+        -Selected:($CSConfig.IsTrue("ProtectedClient"))
+      Get-MenuItem `
+        -Label "Networking" `
+        -Value "Networking" `
+        -Order 1 `
+        -Selected:($CSConfig.IsTrue("Networking"))
+      Get-MenuItem `
+        -Label "vGPU" `
+        -Value "vGPU" `
+        -Order 2 `
+        -Selected:($CSConfig.IsTrue("vGPU"))
+      Get-MenuItem `
+        -Label "Set RAM Amount (Current: $FriendlyRAMToAllocate)" `
+        -Value "CustomRam" `
+        -Order 3 `
+        -Selected:($CSConfig.IsTrue("CustomRam"))
+      Get-MenuItem `
+        -Label "Enable Clipboard Redirection" `
+        -Value "ClipboardRedirection" `
+        -Order 4 `
+        -Selected:($CSConfig.IsTrue("ClipboardRedirection"))
+      Get-MenuItem `
+        -Label "Enable Printer Redirection" `
+        -Value "PrinterRedirection" `
+        -Order 5 `
+        -Selected:($CSConfig.IsTrue("PrinterRedirection"))
+      Get-MenuItem `
+        -Label "Enable Audio Input" `
+        -Value "AudioInput" `
+        -Order 6 `
+        -Selected:($CSConfig.IsTrue("AudioInput"))
+      Get-MenuItem `
+        -Label "Enable Video Input" `
+        -Value "VideoInput" `
+        -Order 7 `
+        -Selected:($CSConfig.IsTrue("VideoInput"))
+      Get-MenuItem `
+        -Label "Update Cached Installers" `
+        -Value "UpdateCache" `
+        -Order 8 `
+        -Selected:($CSConfig.IsTrue("UpdateCache"))
+      Get-MenuItem `
+        -Label "Clear Cache (Size: $CacheSize)" `
+        -Value "ClearCache" `
+        -Order 9 `
+        -Selected:($CSConfig.IsTrue("ClearCache"))
+      Get-MenuItem `
+        -Label "Save Configuration" `
+        -Value "SaveConfig" `
+        -Order 10 `
+        -Selected:($CSConfig.IsTrue("SaveConfig"))
+    ) 
   }
 
-  $CustomRam = Get-MenuSelection -Prompt $RAMHeader -Items $RAMItems -Mode Single
+  $SelectedOptions = Get-MenuSelection @MainMenu
 
-  $CSConfig.SetProperty("CustomRam", $True)
-  $CSConfig.SetProperty("MemoryInMB", $CustomRam)
-  $WSConfig.SetMemoryInMB($CustomRam)
-} else {
-  $CSConfig.SetProperty("CustomRam", $False)
+  $ConfigToggles | ForEach-Object {
+    $CSConfig.SetProperty($_, ($SelectedOptions -contains $_) )
+  }
+
+  if ($SelectedOptions -contains 'CustomRam') {
+
+    $RAMHeader = "Set maximum amount of RAM to allocate to sandbox:"
+
+    $RAMItems = @()
+    $RamOrder = 0
+    for ($RamVal = 2048; $RamVal -le $MaxFreeRam; $RamVal += 1024) {
+      $RAMItems += Get-MenuItem -Label (Get-FriendlySize -MBytes $RamVal) -Value $RamVal -Order $RamOrder
+      $RamOrder++
+    }
+
+    $CustomRam = Get-MenuSelection -Prompt $RAMHeader -Items $RAMItems -Mode Single
+
+    $CSConfig.SetProperty("CustomRam", $True)
+    $CSConfig.SetProperty("MemoryInMB", $CustomRam)
+    $WSConfig.SetMemoryInMB($CustomRam)
+  } else {
+    $CSConfig.SetProperty("CustomRam", $False)
+  }
+
+  if ($SelectedOptions -contains 'UpdateCache') {
+    $CSConfig.SetProperty("UpdateCache", $True)
+  }
+
+  $TaskHeader = "Choose tasks to run:"
+  $TaskItems = @()
+
+  foreach ($Task in $TaskCollection.Tasks) {
+    $TaskItems += Get-MenuItem `
+      -Label $Task.Name `
+      -Value $Task.ID `
+      -Depends $Task.Dependencies `
+      -Selected:($CSConfig.GetProperty("Tasks").Value -contains $Task.ID)
+  }
+
+  $SelectedTasks = Get-MenuSelection -Prompt $TaskHeader -Items $TaskItems -Mode Multi
+  $CSConfig.SetProperty("Tasks", $SelectedTasks)
+
+  if ($SelectedOptions -contains 'SaveConfig') {
+    Write-Host "Saving CustomSandbox Configuration..."
+    $CSConfig.SetProperty("SaveConfig", $True)
+    $CSConfig.Export()
+  }
+
+  Clear-Host
+
 }
 
-if ($SelectedOptions -contains 'ClearCache') {
+if ($CSConfig.IsTrue("ClearCache")) {
   Write-Host "Clearing cache..."
   Get-ChildItem -Path $LauncherCachePath | Remove-Item -Recurse -Force
 }
 
-$ForceCache = ($SelectedOptions -contains 'UpdateCache')
-$CSConfig.SetProperty("UpdateCache", $ForceCache)
-
-$TaskPath = Join-Path $LauncherMountPath "Tasks"
-$TaskCollection = New-CustomSandboxTaskCollection -Path $TaskPath
-
-$TaskHeader = "Choose tasks to run:"
-$TaskItems = @()
-
-foreach ($Task in $TaskCollection.Tasks) {
-  $TaskItems += Get-MenuItem `
-     -Label $Task.Name `
-     -Value $Task.ID `
-     -Depends $Task.Dependencies `
-     -Selected:($CSConfig.GetProperty("Tasks").Value -contains $Task.ID)
-}
-
-$SelectedTasks = Get-MenuSelection -Prompt $TaskHeader -Items $TaskItems -Mode Multi
-
-Clear-Host
-
-$CSConfig.SetProperty("Tasks", $SelectedTasks)
-
-$AllTasks = $TaskCollection.GetTasksWithDepFromList($SelectedTasks)
+$AllTasks = $TaskCollection.GetTasksWithDepFromList($CSConfig.GetProperty("Tasks").Value)
 
 $TaskCollection.Tasks | Where-Object { $_.ID -in $AllTasks } | ForEach-Object {
   Write-Host "Running cache action for task $($_.Name)..."
-  $_.ExecuteAction("cache",$ForceCache)
+  $_.ExecuteAction("cache", $CSConfig.IsTrue("UpdateCache"))
 }
 
 Write-Host "Writing Task Configuration..."
-$SelectedTasks | ConvertTo-Json | Set-Content -Path "$LauncherCachePath\EnabledTasks.json" -Encoding UTF8
+$CSConfig.GetProperty("Tasks").Value | ConvertTo-Json | Set-Content -Path "$LauncherCachePath\EnabledTasks.json" -Encoding UTF8
+
 
 Write-Host "Getting CustomSandbox Configuration..."
 
-$WSConfigToggles = @(
-  'ProtectedClient',
-  'Networking'
-  'vGPU',
-  'ClipboardRedirection',
-  'PrinterRedirection',
-  'AudioInput',
-  'VideoInput'
-)
-
-$WSConfigToggles | ForEach-Object {
-  $PropertyEnabled = ($SelectedOptions -contains $_) 
-  $CSConfig.SetProperty($_, $PropertyEnabled)
-  $WSConfig.SetPropertyToggle($_, $PropertyEnabled)
-}
-
-if ($SelectedOptions -contains 'SaveConfig') {
-  Write-Host "Saving CustomSandbox Configuration..."
-  $CSConfig.SetProperty("SaveConfig", $True)
-  $CSConfig.SetProperty("Version", $AppVersion)
-  $CSConfig.Export()
+$ConfigToggles | ForEach-Object {
+  $WSConfig.SetPropertyToggle($_, $CSConfig.IsTrue($_))
 }
 
 Write-Host "Writing Windows Sandbox Configuration..."
