@@ -388,3 +388,33 @@ function Get-ClonedObject {
   $memStream.Position=0
   $formatter.Deserialize($memStream)
 }
+
+function Get-WebpageObject {
+  param(
+      [Parameter(Mandatory = $true, Position = 0)]
+      [string] $URL
+  )
+
+  $comHTML = $null
+
+  $WebResponse = Invoke-WebRequest $URL -UseBasicParsing
+
+  if ($WebResponse.Content) {
+    $HTML = $WebResponse.Content
+
+    $comHTML = New-Object -Com "HTMLFile"
+
+    try {
+      $comHTML.IHTMLDocument2_write($HTML)
+    } catch {
+      $comHTML.write([System.Text.Encoding]::Unicode.GetBytes($HTML))
+    }
+
+  }
+
+  if(-not $comHTML) {
+    Write-Error "Failed to get object from URL $URL"
+  }
+
+  return $comHTML
+}
