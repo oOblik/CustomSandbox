@@ -1,3 +1,28 @@
+<#
+  .SYNOPSIS
+    CustomSandbox
+
+  .DESCRIPTION
+    A PowerShell utility to facilitate quick automatic configuration of Windows Sandbox. 
+
+  .PARAMETER RunConfig
+    The path to a CustomSandbox configuration file that will be run immediately as is.
+
+  .PARAMETER ForceWSInstall
+    Used by the elevation mechanism to immediately attempt to install the Window Sandbox feature without prompting the user.
+
+  .PARAMETER SkipCompatCheck
+    Used by the elevation mechanism to immediately attempt to install the Window Sandbox feature without prompting the user.
+
+  .EXAMPLE
+    # Run CustomSandbox and set a configuration
+    .\CustomSandbox.ps1
+
+  .EXAMPLE
+    # Run CustomSandbox with an existing configuration
+    .\CustomSandbox.ps1 -RunConfig .\config.json
+#>
+
 #Requires -Version 5
 
 [CmdletBinding()]
@@ -29,7 +54,9 @@ $LauncherTasksPath = Join-Path $LauncherMountPath "Tasks"
 $CSMountPath = "C:\Config"
 $CSCachePath = $LauncherCachePath
 $CSConfigPath = "$LauncherRootPath\config.json"
-$WSConfigPath = Join-Path $LauncherCachePath "$AppName.wsb"
+
+$WSConfigPath = Join-Path $CSCachePath "$AppName.wsb"
+$WSTaskPath = Join-Path $CSCachePath "EnabledTasks.json"
 
 $RAMToAllocateMin = 2048
 $RAMToAllocateIdeal = 4096
@@ -65,8 +92,8 @@ if (Test-Path $CSConfigPath) {
 
 $TaskCollection = New-CustomSandboxTaskCollection -Path $LauncherTasksPath
 
-if (!(Test-Path $LauncherCachePath)) {
-  New-Item -Path $LauncherCachePath -ItemType Directory -Force | Out-Null
+if (!(Test-Path $CSCachePath)) {
+  New-Item -Path $CSCachePath -ItemType Directory -Force | Out-Null
 }
 
 $UtilPath = Join-Path $LauncherMountPath "Utilities"
@@ -144,7 +171,7 @@ $WSConfig.SetMemoryInMB($RAMToAllocateIdeal)
 if(-not $RunConfig) {
   $FriendlyRAMToAllocate = Get-FriendlySize -MBytes $RAMToAllocateIdeal
 
-  $CacheFiles = Get-ChildItem -Path $LauncherCachePath -File -Recurse
+  $CacheFiles = Get-ChildItem -Path $CSCachePath -File -Recurse
   $CacheSize = Get-FriendlySize -MBytes (($CacheFiles | Measure-Object Length -Sum).Sum / 1024 / 1024)
 
   $MainMenu = @{
@@ -267,7 +294,7 @@ if(-not $RunConfig) {
 
 if ($CSConfig.IsTrue("ClearCache")) {
   Write-Host "Clearing cache..."
-  Get-ChildItem -Path $LauncherCachePath | Remove-Item -Recurse -Force
+  Get-ChildItem -Path $CSCachePath | Remove-Item -Recurse -Force
 }
 
 $AllTasks = $TaskCollection.GetTasksWithDepFromList($CSConfig.GetProperty("Tasks").Value)
@@ -278,7 +305,7 @@ $TaskCollection.Tasks | Where-Object { $_.ID -in $AllTasks } | ForEach-Object {
 }
 
 Write-Host "Writing Task Configuration..."
-$CSConfig.GetProperty("Tasks").Value | ConvertTo-Json | Set-Content -Path "$LauncherCachePath\EnabledTasks.json" -Encoding UTF8
+$CSConfig.GetProperty("Tasks").Value | ConvertTo-Json | Set-Content -Path $WSTaskPath -Encoding UTF8
 
 
 Write-Host "Getting CustomSandbox Configuration..."
