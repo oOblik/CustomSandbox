@@ -290,11 +290,11 @@ if(-not $RunConfig) {
 
   Clear-Host
 
-}
+  if ($SelectedOptions -contains 'ClearCache') {
+    Write-Host "Clearing cache..."
+    Get-ChildItem -Path $CSCachePath | Remove-Item -Recurse -Force
+  }
 
-if ($CSConfig.IsTrue("ClearCache")) {
-  Write-Host "Clearing cache..."
-  Get-ChildItem -Path $CSCachePath | Remove-Item -Recurse -Force
 }
 
 $AllTasks = $TaskCollection.GetTasksWithDepFromList($CSConfig.GetProperty("Tasks").Value)
