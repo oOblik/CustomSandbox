@@ -7,7 +7,7 @@ param(
   [object]$Vars
 )
 
-$OutArchivePath = "$CSCachePath\BGInfo.zip"
+$OutArchivePath = "$CSCachePath\HxDSetup.zip"
 $OutPath = "$CSCachePath\HxDSetup.exe"
 
 switch ($Action) {
