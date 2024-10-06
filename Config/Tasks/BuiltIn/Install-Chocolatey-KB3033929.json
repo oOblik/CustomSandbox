@@ -1,0 +1,10 @@
+{
+    "id": "chocolatey-KB3033929",
+    "name": "[Chocolatey] KB3033929",
+    "dependencies": ["chocolatey","chocolatey-windowsupdate.extension","chocolatey-KB3035131"],
+    "type": "config",
+    "script": "Install-Chocolatey-Package.ps1",
+    "vars": {
+        "packagename": "KB3033929"
+    }
+}

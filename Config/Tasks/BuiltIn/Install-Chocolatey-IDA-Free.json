@@ -1,0 +1,10 @@
+{
+    "id": "chocolatey-ida-free",
+    "name": "[Chocolatey] Hex Rays IDA Disassembler Free",
+	"dependencies": ["chocolatey","chocolatey-vcredist140"],
+    "type": "config",
+    "script": "Install-Chocolatey-Package.ps1",
+    "vars": {
+        "packagename": "ida-free"
+    }
+}

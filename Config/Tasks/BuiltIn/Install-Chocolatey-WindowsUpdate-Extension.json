@@ -1,0 +1,10 @@
+{
+    "id": "chocolatey-windowsupdate.extension",
+    "name": "[Chocolatey] Windows Update Extensions",
+    "dependencies": ["chocolatey"],
+    "type": "config",
+    "script": "Install-Chocolatey-Package.ps1",
+    "vars": {
+        "packagename": "chocolatey-windowsupdate.extension"
+    }
+}

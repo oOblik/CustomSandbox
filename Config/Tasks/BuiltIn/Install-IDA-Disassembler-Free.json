@@ -1,6 +1,0 @@
-{
-    "id": "ida-disassembler-free",
-    "name": "[Install] Hex Rays IDA Disassembler Free",
-    "type": "config",
-    "script": "Install-IDA-Disassembler-Free.ps1"
-}

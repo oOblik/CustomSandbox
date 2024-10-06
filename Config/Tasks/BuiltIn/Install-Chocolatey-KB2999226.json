@@ -1,0 +1,10 @@
+{
+    "id": "chocolatey-KB2999226",
+    "name": "[Chocolatey] KB2999226",
+    "dependencies": ["chocolatey","chocolatey-KB2919355","chocolatey-windowsupdate.extension"],
+    "type": "config",
+    "script": "Install-Chocolatey-Package.ps1",
+    "vars": {
+        "packagename": "KB2999226"
+    }
+}

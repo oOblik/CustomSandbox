@@ -28,14 +28,12 @@ Write custom tasks to install software or configure Windows in the sandbox immed
   - AdoptOpen Java JRE
   - Apache OpenOffice
   - [Experimental] Chocolatey - Installs are cached/internalized and can be done with networking disabled.
-    - Compatibility Extensions
-    - Core Extensions
     - Google Chrome
+    - Hex Rays IDA Disassembler (free)
     - Microsoft .NET Framework
     - ShareX
   - Google Chrome
   - HxD Hex Editor
-  - Hex Rays IDA Disassembler (free)
   - ManageEngine MIB Browser
   - Microsoft VS Code
   - Mozilla Firefox

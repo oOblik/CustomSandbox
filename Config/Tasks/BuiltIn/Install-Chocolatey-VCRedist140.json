@@ -1,0 +1,10 @@
+{
+    "id": "chocolatey-vcredist140",
+    "name": "[Chocolatey] Microsoft VC++ Redist for VS 2015-2022",
+    "dependencies": ["chocolatey","chocolatey-core.extension","chocolatey-KB3033929","chocolatey-KB2919355","chocolatey-KB2999226"],
+    "type": "config",
+    "script": "Install-Chocolatey-Package.ps1",
+    "vars": {
+        "packagename": "vcredist140"
+    }
+}
