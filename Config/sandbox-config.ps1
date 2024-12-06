@@ -10,6 +10,8 @@ $CSCachePath = Join-Path $CSMountPath "Cache"
 
 Start-Transcript -Path "$Env:USERPROFILE\CustomSandbox.log"
 
+Initialize-TLS
+
 if(Test-Path $OldWSMountPath ) {
     New-Item -Path "C:\Config" -ItemType SymbolicLink -Value $OldWSMountPath | Out-Null
     & attrib +s +h "C:\Config" /l

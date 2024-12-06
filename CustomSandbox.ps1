@@ -71,6 +71,8 @@ $ConfigToggles = @(
   'VideoInput'
 )
 
+Initialize-TLS
+  
 $WSConfig = New-WSConfig -Path $WSConfigPath
 $WSConfig.SetHostFolder($LauncherMountPath)
 $WSConfig.SetSandboxFolder($CSMountPath)
