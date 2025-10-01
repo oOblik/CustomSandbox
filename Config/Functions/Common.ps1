@@ -37,8 +37,15 @@ function Initialize-TLS {
 function Invoke-ExecuteTaskList {
   param(
     [object]$TaskList,
-    [string]$Type
+    [string]$Type,
+    [string]$ExecuteAction = "execute"
   )
+
+  $ActionText = "Configuring sandbox..."
+
+  if($ExecuteAction -eq "cleanup") {
+    $ActionText = "Running clean up from task:"
+  }
 
   if ($TaskList) {
 
@@ -46,7 +53,7 @@ function Invoke-ExecuteTaskList {
 <toast scenario="incomingCall">
     <visual>
         <binding template="ToastGeneric">
-            <text>Configuring sandbox...</text>
+            <text>$ActionText</text>
             <progress title="{progressTitle}" value="{progressValue}" valueStringOverride="{progressValueString}" status="{progressStatus}"/>
         </binding>
     </visual>
@@ -78,7 +85,7 @@ function Invoke-ExecuteTaskList {
       $NotificationData.SequenceNumber = 2
       [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($AppId).Update($NotificationData,$AppName)
 
-      $TaskList[$Task].ExecuteAction("execute",$false)
+      $TaskList[$Task].ExecuteAction($ExecuteAction,$false)
     }
 
     [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($AppId).Hide($ToastNotification)
@@ -424,4 +431,38 @@ function Get-WebpageObject {
   }
 
   return $comHTML
+}
+
+function Invoke-RegisterCleanupOnShutdown {
+  param(
+    [string]$ScriptPath
+  )
+
+  # Ensure the script exists
+  if (-Not (Test-Path $ScriptPath)) {
+    Write-Error "Shutdown script not found at $ScriptPath"
+    exit
+  }
+
+  # Ensure the GPO scripts folder exists
+  $gpoScriptsFolder = "$env:SystemRoot\System32\GroupPolicy\Machine\Scripts"
+
+  if (-Not (Test-Path $gpoScriptsFolder)) {
+    New-Item -Path $gpoScriptsFolder -ItemType Directory -Force
+  }
+
+  # Define the Group Policy shutdown scripts folder
+  $gpoIniFile = "$gpoScriptsFolder\psscripts.ini"
+
+  # Update the scripts.ini file to call PowerShell
+  $iniContent = @"
+[Shutdown]
+0CmdLine=$ScriptPath
+0Parameters=
+
+"@
+
+  Set-Content -Path $gpoIniFile -Value $iniContent -Encoding ASCII
+  
+  Write-Host "Clean up shutdown script successfully added to local group policy."
 }

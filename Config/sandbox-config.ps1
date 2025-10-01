@@ -10,6 +10,8 @@ $CSCachePath = Join-Path $CSMountPath "Cache"
 
 Start-Transcript -Path "$Env:USERPROFILE\CustomSandbox.log"
 
+Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope LocalMachine
+
 Initialize-TLS
 
 if(Test-Path $OldWSMountPath ) {
@@ -17,6 +19,8 @@ if(Test-Path $OldWSMountPath ) {
     & attrib +s +h "C:\Config" /l
 }
 
+Write-Host 'Registering Cleanup on Shutdown...'
+Invoke-RegisterCleanupOnShutdown -ScriptPath "$CSMountPath\sandbox-cleanup.ps1"
 
 Write-Host 'Importing Tasks...'
 $TaskPath = Join-Path $CSMountPath "Tasks"
@@ -28,7 +32,11 @@ $TaskCollection.Tasks = $TaskCollection.Tasks | Where-Object { $_.ID -in $AllTas
 
 $PreConfigTasks = $TaskCollection.Tasks | Where-Object { $_.Type -eq 'preconfig' }
 $PostConfigTasks = $TaskCollection.Tasks | Where-Object { $_.Type -eq 'postconfig' }
-$ConfigTasks = $TaskCollection.Tasks | Where-Object { $_.Type -ne 'preconfig' -and $_.Type -ne 'postconfig' }
+$ConfigTasks = $TaskCollection.Tasks | Where-Object { 
+    $_.Type -ne 'preconfig' `
+    -and $_.Type -ne 'postconfig' `
+    -and $_.Type -ne 'cleanup' 
+}
 
 #Set limited GUI for configuration mode
 Write-Host 'Setting Initial Wallpaper...'
