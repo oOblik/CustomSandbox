@@ -1,3 +1,5 @@
+$global:LastToastTime = $null
+
 function Get-FriendlySize {
   param([int]$MBytes)
 
@@ -48,6 +50,20 @@ function Invoke-ExecuteTaskList {
   }
 
   if ($TaskList) {
+
+    $MinimumDelayMs = 300
+    $currentTime = Get-Date
+    
+    if ($null -ne $global:LastToastTime) {
+        $elapsedMs = ($currentTime - $global:LastToastTime).TotalMilliseconds
+        if ($elapsedMs -lt $MinimumDelayMs) {
+            $waitMs = [math]::Ceiling($MinimumDelayMs - $elapsedMs)
+            Start-Sleep -Milliseconds $waitMs
+        }
+    }
+
+    # Update the last run time
+    $global:LastToastTime = Get-Date
 
     $xml = @"
 <toast scenario="incomingCall">
