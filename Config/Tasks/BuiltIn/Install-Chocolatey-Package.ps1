@@ -18,9 +18,31 @@ $PkgPath = Join-Path $CacheDir "$PackageName.zip"
 $CheckPath = Join-Path $CacheDir "$PackageName.nupkg"
 
 $PgkWorkDir = Join-Path $CacheDir "package"
-$PkgInstallFile = "tools\chocolateyInstall.ps1"
+$PkgInstallFiles = @(
+  "tools\chocolateyInstall.ps1"
+  "tools\data.ps1"
+)
 
 $InternalizedDir = Join-Path "$CSMountPath\Cache\Chocolatey" $PackageName
+
+Function Invoke-InternalizeFile {
+  param(
+    [string]$Path
+  )
+
+  $InstallFile = Get-Content -Path $Path
+
+  $URLPattern = "(?<=['`"])(http[s]?)(:\/\/)([^\s,]+)(?<!['`"])"
+
+  $InstallFile | Select-String -AllMatches $URLPattern | ForEach-Object {
+    $DLFileName = Invoke-BlindFileDownload -Url $_.Matches.Value -FolderPath $CacheDir
+    $InternalizedPath = Join-Path $InternalizedDir $DLFileName
+    $InstallFile = $InstallFile.Replace($_.Matches.Value,$InternalizedPath)
+  }
+
+  $InstallFile | Set-Content -Path $PkgInstallFilePath -Force
+
+}
 
 switch ($Action) {
   "cache" {
@@ -41,25 +63,15 @@ switch ($Action) {
 
     Expand-Archive -Path $PkgPath -DestinationPath $PgkWorkDir
 
-    $PkgInstallFilePath = Join-Path $PgkWorkDir $PkgInstallFile
+    foreach ($PkgInstallFile in $PkgInstallFiles) {
+      $PkgInstallFilePath = Join-Path $PgkWorkDir $PkgInstallFile
 
-    if (Test-Path $PkgInstallFilePath) {
-
-      $InstallFile = Get-Content -Path $PkgInstallFilePath
-
-      $URLPattern = "(?<=['`"])(http[s]?)(:\/\/)([^\s,]+)(?<!['`"])"
-
-      $InstallFile | Select-String -AllMatches $URLPattern | ForEach-Object {
-        $DLFileName = Invoke-BlindFileDownload -Url $_.Matches.Value -FolderPath $CacheDir
-        $InternalizedPath = Join-Path $InternalizedDir $DLFileName
-        $InstallFile = $InstallFile.Replace($_.Matches.Value,$InternalizedPath)
+      if (Test-Path $PkgInstallFilePath) {
+        Invoke-InternalizeFile -Path $PkgInstallFilePath
       }
-
-      $InstallFile | Set-Content -Path $PkgInstallFilePath -Force
-
-      Compress-Archive -Path ($PgkWorkDir + "\*") -DestinationPath $PkgPath -Force
-
     }
+
+    Compress-Archive -Path ($PgkWorkDir + "\*") -DestinationPath $PkgPath -Force
 
     Get-Item -Path $PkgPath | Rename-Item -NewName { [IO.Path]::ChangeExtension($_.Name,"nupkg") }
 
