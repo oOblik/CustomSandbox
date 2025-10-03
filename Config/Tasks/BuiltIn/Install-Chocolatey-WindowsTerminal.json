@@ -1,0 +1,10 @@
+{
+    "id": "chocolatey-microsoft-windows-terminal",
+    "name": "[Chocolatey] Windows Terminal",
+    "dependencies": ["chocolatey", "chocolatey-vcredist140"],
+    "type": "config",
+    "script": "Install-Chocolatey-Package.ps1",
+    "vars": {
+        "packagename": "microsoft-windows-terminal"
+    }
+}

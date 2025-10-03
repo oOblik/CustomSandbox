@@ -22,17 +22,12 @@ Write custom tasks to install software or configure Windows in the sandbox immed
   - Video Input
   - Maximum memory allocated to Windows Sandbox (based on available free memory)
 - Custom configuration / software installation tasks
-- Built-in tasks for installation of the following:
+
+__Built-in tasks for installation of the following:__
   - 7-Zip
   - AdoptOpen Java JDK
   - AdoptOpen Java JRE
   - Apache OpenOffice
-  - [Experimental] Chocolatey - Installs are cached/internalized and can be done with networking disabled.
-    - Git
-    - Google Chrome
-    - Hex Rays IDA Disassembler (free)
-    - Microsoft .NET Framework
-    - ShareX
   - gg.cmd
   - Google Chrome
   - HxD Hex Editor
@@ -41,9 +36,19 @@ Write custom tasks to install software or configure Windows in the sandbox immed
   - Mozilla Firefox
   - Notepad++
   - Sysinternals BGInfo
+
+__Chocolatey [Experimental]__ - Installs are cached/internalized and can be done with networking disabled.
+  - Git
+  - Google Chrome
+  - Hex Rays IDA Disassembler (free)
+  - Microsoft .NET Framework
+  - ShareX
   - Windows Terminal
 
-Installation tasks pre-download and cache required installation files outside of the sandbox so they can be quickly re-used in successive runs, or installed if networking in the sandbox is disabled.
+__WinGet [Experimental]__ - Networking is required as packages cannot be be caches/internalized and installed offline.
+  - Windows Terminal
+
+When possible, installation tasks pre-download and cache required installation files outside of the sandbox so they can be quickly re-used in successive runs, or installed if networking in the sandbox is disabled.
 
 ## ✅ Requirements
 

@@ -1,0 +1,10 @@
+{
+    "id": "winget-microsoft.windowsterminal",
+    "name": "[WinGet] Windows Terminal",
+    "dependencies": ["winget"],
+    "type": "config",
+    "script": "Install-WinGet-Package.ps1",
+    "vars": {
+        "packagename": "Microsoft.WindowsTerminal"
+    }
+}
