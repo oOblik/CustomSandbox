@@ -9,9 +9,6 @@ $CSCachePath = Join-Path $CSMountPath "Cache"
 
 Initialize-TLS
 
-# Abort initial shutdown (probably wont work)
-&"shutdown" /a
-
 Write-Host 'Importing Tasks...'
 $TaskPath = Join-Path $CSMountPath "Tasks"
 $TaskCollection = New-CustomSandboxTaskCollection -Path $TaskPath
@@ -24,5 +21,4 @@ Invoke-ExecuteTaskList -TaskList $TaskCollection.Tasks -Type "Cleanup Tasks" -Ex
 
 Write-Host 'Done'
 
-# Now we can shutdown
-&"shutdown" /s
+Stop-Computer

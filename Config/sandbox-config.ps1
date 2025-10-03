@@ -19,8 +19,8 @@ if(Test-Path $OldWSMountPath ) {
     & attrib +s +h "C:\Config" /l
 }
 
-Write-Host 'Registering Cleanup on Shutdown...'
-Invoke-RegisterCleanupOnShutdown -ScriptPath "$CSMountPath\sandbox-cleanup.ps1"
+Write-Host 'Registering Cleanup & Shutdown...'
+Set-CleanupAndShutdown -ScriptPath "$CSMountPath\sandbox-cleanup.ps1"
 
 Write-Host 'Importing Tasks...'
 $TaskPath = Join-Path $CSMountPath "Tasks"

@@ -196,12 +196,20 @@ function Set-TaskbarVisibility {
 function New-Shortcut {
   param(
     [string]$Path,
-    [string]$TargetPath
+    [string]$TargetPath,
+    [string]$IconLocation,
+    [string]$Arguments
   )
 
   $WshShell = New-Object -ComObject WScript.Shell
   $Shortcut = $WshShell.CreateShortcut($Path)
   $Shortcut.TargetPath = $TargetPath
+  if($IconLocation) {
+    $Shortcut.IconLocation = $IconLocation
+  }
+  if($Arguments) {
+    $Shortcut.Arguments = $Arguments
+  }
   $Shortcut.Save()
 }
 
@@ -433,36 +441,25 @@ function Get-WebpageObject {
   return $comHTML
 }
 
-function Invoke-RegisterCleanupOnShutdown {
+function Set-CleanupAndShutdown {
   param(
     [string]$ScriptPath
   )
 
-  # Ensure the script exists
-  if (-Not (Test-Path $ScriptPath)) {
-    Write-Error "Shutdown script not found at $ScriptPath"
-    exit
-  }
+  $ShortcutName = "Cleanup & Shutdown"
+  $ShortcutIcon = "$env:SystemRoot\System32\shell32.dll,27"
+  $ShortcutTarget = "powershell.exe"
+  $ShortcutArgs = "-ExecutionPolicy Bypass -WindowStyle Hidden -File `"$ScriptPath`""
 
-  # Ensure the GPO scripts folder exists
-  $gpoScriptsFolder = "$env:SystemRoot\System32\GroupPolicy\Machine\Scripts"
+  # Create Desktop shortcut
+  New-Shortcut -Path "$env:USERPROFILE\Desktop\$ShortcutName.lnk" `
+    -TargetPath $ShortcutTarget `
+    -IconLocation $ShortcutIcon `
+    -Arguments $ShortcutArgs
 
-  if (-Not (Test-Path $gpoScriptsFolder)) {
-    New-Item -Path $gpoScriptsFolder -ItemType Directory -Force
-  }
-
-  # Define the Group Policy shutdown scripts folder
-  $gpoIniFile = "$gpoScriptsFolder\psscripts.ini"
-
-  # Update the scripts.ini file to call PowerShell
-  $iniContent = @"
-[Shutdown]
-0CmdLine=$ScriptPath
-0Parameters=
-
-"@
-
-  Set-Content -Path $gpoIniFile -Value $iniContent -Encoding ASCII
-  
-  Write-Host "Clean up shutdown script successfully added to local group policy."
+  # Create Start Menu shortcut
+  New-Shortcut -Path "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\$ShortcutName.lnk" `
+    -TargetPath $ShortcutTarget `
+    -IconLocation $ShortcutIcon `
+    -Arguments $ShortcutArgs
 }
