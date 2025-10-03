@@ -1,0 +1,6 @@
+{
+    "id": "gg.cmd",
+    "name": "[Install] gg.cmd",
+    "type": "config",
+    "script": "Install-gg.cmd.ps1"
+}

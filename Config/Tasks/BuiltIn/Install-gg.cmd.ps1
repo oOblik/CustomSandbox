@@ -22,6 +22,7 @@ switch ($Action) {
   "execute" {
     if (Test-Path $OutPath) {
       Copy-Item -Path $OutPath -Destination "$HOME\gg.cmd"
+      & "$HOME\gg.cmd"
     } else {
       Write-Host "Utility not found for task $($MyInvocation.MyCommand.Name)"
     }

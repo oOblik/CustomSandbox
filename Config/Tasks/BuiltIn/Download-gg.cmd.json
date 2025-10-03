@@ -1,6 +1,0 @@
-{
-    "id": "gg.cmd",
-    "name": "[Download] gg.cmd",
-    "type": "config",
-    "script": "Download-gg.cmd.ps1"
-}
