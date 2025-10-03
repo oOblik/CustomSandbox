@@ -1,0 +1,9 @@
+{
+    "id": "winget",
+    "name": "[Install] WinGet",
+    "type": "config",
+    "script": "Install-WinGet.ps1",
+    "requirements": [
+        "networking"
+    ]
+}
