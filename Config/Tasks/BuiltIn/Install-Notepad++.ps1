@@ -26,25 +26,6 @@ switch ($Action) {
   "execute" {
     if (Test-Path $OutPath) {
       Start-Process -FilePath $OutPath -ArgumentList "/S" -WindowStyle Hidden -Wait
-
-      if (([Environment]::OSVersion.Version).Build -ge 22000) {
-        $NPPExe = "$env:LOCALAPPDATA\Programs\Notepad++\notepad++.exe"
-
-        if (-not (Test-Path $NPPExe)) {
-          $NPPExe = "$env:ProgramFiles\Notepad++\notepad++.exe"
-        }
-        if (-not (Test-Path $NPPExe)) {
-          $NPPExe = "${env:ProgramFiles(x86)}\Notepad++\notepad++.exe"
-        }
-
-        if (Test-Path $NPPExe) {
-          $Path = 'HKCU:\Software\Classes\*\shell\pintohome'
-          New-Item -Path "$Path\command" -Force | Out-Null
-          Set-ItemProperty -LiteralPath $Path -Name 'MUIVerb' -Value 'Edit with Notepad++'
-          Set-ItemProperty -LiteralPath "$Path\command" -Name '(Default)' -Value ('"{0}" "%1"' -f $NPPExe)
-        }
-      }
-
     } else {
       Write-Host "Installer not found for task $($MyInvocation.MyCommand.Name)"
     }
