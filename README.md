@@ -32,6 +32,7 @@ Write custom tasks to install software or configure Windows in the sandbox immed
     - Hex Rays IDA Disassembler (free)
     - Microsoft .NET Framework
     - ShareX
+  - gg.cmd
   - Google Chrome
   - HxD Hex Editor
   - ManageEngine MIB Browser
@@ -47,7 +48,7 @@ Installation tasks pre-download and cache required installation files outside of
 
 [Enable Windows Sandbox on Windows](https://learn.microsoft.com/en-us/windows/security/application-security/application-isolation/windows-sandbox/windows-sandbox-overview#prerequisites)
 
-⚠️ *DISCLAIMER:* _CustomSandbox has been tested with Windows 11 22H2 and PowerShell 5.1. While it should work from Windows 10 1903 or later, your results may vary._
+⚠️ *DISCLAIMER:* _CustomSandbox has been tested with Windows 11 25H2 and PowerShell 5.1. While it should work from Windows 10 1903 or later, your results may vary._
 
 ## 💻 Installation / Usage
 
