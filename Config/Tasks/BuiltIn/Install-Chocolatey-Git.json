@@ -1,0 +1,11 @@
+{
+    "id": "chocolatey-git",
+    "name": "[Chocolatey] Git",
+    "dependencies": ["chocolatey","chocolatey-core.extension"],
+    "type": "config",
+    "script": "Install-Chocolatey-Package.ps1",
+    "vars": {
+        "packagename": "git.install",
+        "args": "--params \"'/GitAndUnixToolsOnPath /WindowsTerminal /WindowsTerminalProfile'\""
+    }
+}

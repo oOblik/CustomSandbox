@@ -28,6 +28,7 @@ Write custom tasks to install software or configure Windows in the sandbox immed
   - AdoptOpen Java JRE
   - Apache OpenOffice
   - [Experimental] Chocolatey - Installs are cached/internalized and can be done with networking disabled.
+    - Git
     - Google Chrome
     - Hex Rays IDA Disassembler (free)
     - Microsoft .NET Framework
