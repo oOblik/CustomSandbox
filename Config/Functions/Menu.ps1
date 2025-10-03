@@ -7,10 +7,12 @@ class MenuItem{
   [string]$Info
   [int]$Order
   [switch]$ReadOnly
+  [switch]$Disabled
   [string[]]$Depends
+  [string[]]$Requirements
 
-  MenuItem ([string]$Label,[string]$Value,[switch]$Selected,[string]$Info,[int]$Order,[switch]$ReadOnly,[string[]]$Depends) {
-    $this.Init($Label,$Value,$Selected,$Info,$Order,$ReadOnly,$Depends);
+  MenuItem ([string]$Label,[string]$Value,[switch]$Selected,[string]$Info,[int]$Order,[switch]$ReadOnly,[switch]$Disabled,[string[]]$Depends,[string[]]$Requirements) {
+    $this.Init($Label,$Value,$Selected,$Info,$Order,$ReadOnly,$Disabled,$Depends,$Requirements);
   }
 
   hidden Init (
@@ -20,7 +22,9 @@ class MenuItem{
     [string]$Info,
     [int]$Order,
     [switch]$ReadOnly,
-    [string[]]$Depends
+    [switch]$Disabled,
+    [string[]]$Depends,
+    [string[]]$Requirements
   ) {
     $this.Label = $Label
     $this.Value = $Value
@@ -28,7 +32,9 @@ class MenuItem{
     $this.Info = $Info
     $this.Order = $Order
     $this.ReadOnly = $ReadOnly
+    $this.Disabled = $Disabled
     $this.Depends = $Depends
+    $this.Requirements = $Requirements
   }
 
   [int] length () {
@@ -65,6 +71,7 @@ class Menu{
   $SelectedColor = [ConsoleColor]::Green
   $DependencyColor = [ConsoleColor]::DarkYellow
   $ReadOnlyColor = [ConsoleColor]::DarkGray
+  $DisabledColor = [ConsoleColor]::DarkMagenta
 
   $ScrollArrowColor = [ConsoleColor]::Yellow
 
@@ -136,6 +143,21 @@ class Menu{
         break;
       }
       $([ConsoleKey]::Enter) {
+        $InvalidItems = $this.Items | Where-Object { (($_.Selected -or ($_.Value -in $this.DependencyList)) -and $_.Disabled) }
+        if($InvalidItems.Count -gt 0) {
+          Clear-Host
+          Write-Host "You have enabled tasks/dependancies that require disabled features:" -ForegroundColor Magenta
+          Write-Host
+          $InvalidItems | ForEach-Object { 
+            $ReqList = $_.Requirements -join ", "
+            Write-Host " - $($_.Label): $ReqList" -ForegroundColor Red 
+          }
+          Write-Host
+          Write-Host "Press [SPACE] to Continue" | Out-Null
+          $this.ProcessInput([Console]::ReadKey("NoEcho,IncludeKeyDown")) | Out-Null
+          return $false
+          break;
+        }
         return $true
       }
       $([ConsoleKey]::Escape) {
@@ -233,6 +255,7 @@ class Menu{
     $Dependency = ($MenuItem.Value -in $this.DependencyList)
     $Selected = ($MenuItem.Selected)
     $ReadOnly = ($MenuItem.ReadOnly)
+    $Disabled = ($MenuItem.Disabled)
 
     if ($this.ShowScroll) {
       Write-Host "$($this.ScrollBarBuffer[$VisibleIndex]) " -NoNewline
@@ -241,6 +264,7 @@ class Menu{
     }
 
     $Prefix = " "
+    $Suffix = ""
 
     if ($this.Mode -eq "Multi") {
       if ($Selected) {
@@ -255,6 +279,17 @@ class Menu{
       if($ReadOnly) {
         $ForegroundColor = $this.ReadOnlyColor
       }
+      if($Disabled -and ($Selected -or $Dependency)) {
+        if($Selected) {
+          $Prefix = "[!]"
+        }
+        if($Dependency) {
+          $Prefix = "[#]"
+        }
+        $ForegroundColor = $this.DisabledColor
+        $Requires = $MenuItem.Requirements -Join ", "
+        $Suffix = " (Requires $Requires)"
+      }
       if($CurrentItem) {
         $Prefix = ">$Prefix<"
       } else {
@@ -266,7 +301,7 @@ class Menu{
       }
     }
 
-    $ItemString = "$Prefix $($MenuItem.Label)"
+    $ItemString = "$Prefix $($MenuItem.Label)$Suffix"
 
     if ($ItemString.length -gt ($this.WindowSize.Width-2)) {
       $ItemString = $ItemString.Substring(0,($this.WindowSize.Width - 5)) + '...'
@@ -413,10 +448,12 @@ function Get-MenuItem {
     [string]$Info = "",
     [int]$Order = 0,
     [switch]$ReadOnly,
-    [string[]]$Depends = @()
+    [switch]$Disabled,
+    [string[]]$Depends = @(),
+    [string[]]$Requirements = @()
 
   )
-  [MenuItem]::New($Label,$Value,$Selected.IsPresent,$Info,$Order,$ReadOnly.IsPresent,$Depends)
+  [MenuItem]::New($Label,$Value,$Selected.IsPresent,$Info,$Order,$ReadOnly.IsPresent,$Disabled.IsPresent,$Depends,$Requirements)
 }
 
 function Get-MenuSelection {

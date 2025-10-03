@@ -274,11 +274,16 @@ if(-not $RunConfig) {
   $TaskItems = @()
 
   foreach ($Task in $TaskCollection.Tasks) {
+    $TaskIsSelected = ($CSConfig.GetProperty("Tasks").Value -contains $Task.ID)
+    $TaskIsPossible = ($Task.Requirements -notcontains 'networking' -or $CSConfig.IsTrue("Networking"))
+
     $TaskItems += Get-MenuItem `
       -Label $Task.Name `
       -Value $Task.ID `
       -Depends $Task.Dependencies `
-      -Selected:($CSConfig.GetProperty("Tasks").Value -contains $Task.ID)
+      -Selected:($TaskIsSelected -and $TaskIsPossible) `
+      -Disabled:(!$TaskIsPossible) `
+      -Requirements $Task.Requirements
   }
 
   $SelectedTasks = Get-MenuSelection -Prompt $TaskHeader -Items $TaskItems -Mode Multi
