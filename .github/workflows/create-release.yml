@@ -1,0 +1,88 @@
+name: Create Release
+
+concurrency: production
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version Tag (ex. v1.0)'
+        required: true
+        type: string
+
+jobs:
+  build-and-publish:
+    if: startsWith(inputs.version, 'v')
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set Variables
+        id: set_vars
+        run: |
+          VERSION="${{ inputs.version }}"
+          echo "REPO_NAME=$(basename $GITHUB_REPOSITORY)" >> $GITHUB_ENV
+          echo "VERSION=${{ inputs.version }}" >> $GITHUB_ENV
+          echo "NEW_VERSION=${VERSION#v}" >> $GITHUB_ENV
+
+      - name: Update Version in Code
+        run: |
+          sed -i "s/\(\$AppVersion = \"\)[^\"]*\(\"\)/\1$NEW_VERSION\2/" CustomSandbox.ps1
+
+      - name: Commit New Version
+        run: |
+          git config user.name "${{ vars.GIT_USERNAME }}"
+          git config user.email "${{ vars.GIT_EMAIL }}"
+          git add CustomSandbox.ps1
+          git commit -m "Bump version $NEW_VERSION"
+          git push
+
+      - name: Create Version Tag
+        run: |
+          git tag "$VERSION"
+          git push origin "$VERSION"
+
+      - name: Get Previous Tag
+        id: prev_tag
+        run: |
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ || echo "")
+          echo "PREV_TAG=$PREV_TAG" >> $GITHUB_ENV
+
+      - name: Generate Changelog
+        id: changelog
+        run: |
+          if [ -z "$PREV_TAG" ]; then
+            LOG=$(git log --pretty=format:"- %s" $VERSION)
+          else
+            LOG=$(git log --pretty=format:"- %s" $PREV_TAG..$VERSION)
+          fi
+          echo "CHANGELOG<<EOF" >> $GITHUB_ENV
+          echo "$LOG" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Create Release Artifacts
+        run: |
+          mkdir release
+          rsync -av \
+            --exclude='.git*' \
+            --exclude='Resources/' \
+            --exclude='README.md' \
+            --exclude='release/' \
+            ./ ./release/
+          cd release
+          zip -r "../${REPO_NAME}-${VERSION}.zip" ./*
+
+      - name: Upload Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.VERSION }}
+          name: "${{ env.VERSION }}"
+          body: ${{ env.CHANGELOG }}
+          files: "${{ env.REPO_NAME }}-${{ env.VERSION }}.zip"
+          draft: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
