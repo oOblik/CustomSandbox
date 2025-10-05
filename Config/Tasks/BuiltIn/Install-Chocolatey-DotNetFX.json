@@ -5,6 +5,7 @@
     "type": "config",
     "script": "Install-Chocolatey-Package.ps1",
     "vars": {
-        "packagename": "dotnetfx"
+        "packagename": "dotnetfx",
+        "args": "--pre"
     }
 }
