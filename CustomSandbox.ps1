@@ -266,9 +266,7 @@ if(-not $RunConfig) {
     $CSConfig.SetProperty("CustomRam", $False)
   }
 
-  if ($SelectedOptions -contains 'UpdateCache') {
-    $CSConfig.SetProperty("UpdateCache", $True)
-  }
+  $CSConfig.SetProperty("UpdateCache", ($SelectedOptions -contains 'UpdateCache'))
 
   $TaskHeader = "Choose tasks to run:"
   $TaskItems = @()
