@@ -16,7 +16,7 @@
 		    <taskbar:DesktopApp DesktopApplicationLinkPath="%PROGRAMDATA%\Microsoft\Windows\Start Menu\Programs\Notepad++.lnk" />
 		    <taskbar:DesktopApp DesktopApplicationLinkPath="%APPDATA%\Microsoft\Windows\Start Menu\Programs\Visual Studio Code\Visual Studio Code.lnk" />
 		    <taskbar:DesktopApp DesktopApplicationLinkPath="%PROGRAMDATA%\Microsoft\Windows\Start Menu\Programs\HxD Hex Editor\HxD.lnk" />
-	    </taskbar:TaskbarPinList>
+      </taskbar:TaskbarPinList>
     </defaultlayout:TaskbarLayout>
- </CustomTaskbarLayoutCollection>
+  </CustomTaskbarLayoutCollection>
 </LayoutModificationTemplate>

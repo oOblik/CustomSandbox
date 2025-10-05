@@ -55,7 +55,11 @@ Invoke-ExecuteTaskList -TaskList $ConfigTasks -Type "Configuration Tasks"
 
 #Configure Taskbar Items
 Write-Host 'Setting Taskbar...'
-Import-StartLayout -LayoutPath "$CSMountPath\Assets\TaskbarLayout.xml" -MountPath "$Env:SYSTEMDRIVE\"
+$TaskbarLayoutRegPath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Explorer"
+if (-not (Test-Path $TaskbarLayoutRegPath)) {
+    New-Item -Path $TaskbarLayoutRegPath -Force | Out-Null
+}
+Set-ItemProperty -Path $TaskbarLayoutRegPath -Name "StartLayoutFile" -Value "$CSMountPath\Assets\TaskbarLayout.xml" -Type ExpandString
 
 Write-Host 'Setting Final Wallpaper...'
 Update-WallPaper -Path "$CSMountPath\Wallpaper.jpg"
