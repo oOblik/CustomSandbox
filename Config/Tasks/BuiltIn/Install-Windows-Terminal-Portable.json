@@ -1,0 +1,6 @@
+{
+    "id": "windows-terminal-portable",
+    "name": "[Install] Windows Terminal (Portable)",
+    "type": "config",
+    "script": "Install-Windows-Terminal-Portable.ps1"
+}

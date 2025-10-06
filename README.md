@@ -36,6 +36,7 @@ __Built-in tasks for installation of the following:__
   - Mozilla Firefox
   - Notepad++
   - Sysinternals BGInfo
+  - Windows Terminal
 
 __Chocolatey [Experimental]__ - Installs are cached/internalized and can be done with networking disabled.
   - Git
