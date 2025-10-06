@@ -86,6 +86,7 @@ switch ($Action) {
       Copy-Item "$file" "$nupkg" -Force -ErrorAction SilentlyContinue
     }
 
+    choco feature enable -n allowGlobalConfirmation
     break;
   }
 
