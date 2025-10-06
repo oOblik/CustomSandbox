@@ -1,0 +1,6 @@
+{
+    "id": "msi-performance-fix",
+    "name": "[Windows Sandbox] MSI Performance Fix",
+    "type": "preconfig",
+    "script": "PreConfig-MSI-Performance-Fix.ps1"
+}
