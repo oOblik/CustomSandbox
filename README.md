@@ -46,7 +46,7 @@ __Chocolatey [Experimental]__ - Installs are cached/internalized and can be done
   - ShareX
   - Windows Terminal
 
-__WinGet [Experimental]__ - Networking is required as packages cannot be be caches/internalized and installed offline.
+__WinGet [Experimental]__ - Networking is required as packages cannot be be cached/internalized and installed offline.
   - Windows Terminal
 
 When possible, installation tasks pre-download and cache required installation files outside of the sandbox so they can be quickly re-used in successive runs, or installed if networking in the sandbox is disabled.
@@ -55,7 +55,7 @@ When possible, installation tasks pre-download and cache required installation f
 
 [Enable Windows Sandbox on Windows](https://learn.microsoft.com/en-us/windows/security/application-security/application-isolation/windows-sandbox/windows-sandbox-overview#prerequisites)
 
-⚠️ *DISCLAIMER:* _CustomSandbox has been tested with Windows 11 25H2 and PowerShell 5.1. While it should work from Windows 10 1903 or later, your results may vary._
+⚠️ *Notice:* _CustomSandbox has been tested with Windows 11 25H2 and PowerShell 5.1. While it should work from Windows 10 1903 or later, your results may vary._
 
 ## 💻 Installation / Usage
 
