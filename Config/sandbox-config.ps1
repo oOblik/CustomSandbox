@@ -60,6 +60,7 @@ if (-not (Test-Path $TaskbarLayoutRegPath)) {
     New-Item -Path $TaskbarLayoutRegPath -Force | Out-Null
 }
 Set-ItemProperty -Path $TaskbarLayoutRegPath -Name "StartLayoutFile" -Value "$CSMountPath\Assets\TaskbarLayout.xml" -Type ExpandString
+Set-ItemProperty -Path $TaskbarLayoutRegPath -Name "LockedStartLayout" -Value 1 -Type DWord
 
 Write-Host 'Setting Final Wallpaper...'
 Update-WallPaper -Path "$CSMountPath\Wallpaper.jpg"
