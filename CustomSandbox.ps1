@@ -36,7 +36,7 @@ $ErrorActionPreference = 'Continue'
 $ProgressPreference = 'SilentlyContinue'
 
 $AppName = "CustomSandbox"
-$AppVersion = "1.3"
+$AppVersion = "1.4"
 
 try { Stop-Transcript | Out-Null } catch [System.InvalidOperationException]{}
 Start-Transcript -Path "$PSScriptRoot\CustomSandbox.log"
