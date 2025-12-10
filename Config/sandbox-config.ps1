@@ -19,6 +19,10 @@ if(Test-Path $OldWSMountPath ) {
     & attrib +s +h "C:\Config" /l
 }
 
+Write-Host 'Snapshotting Start Menu Items...'
+$StartSnapshot = Get-ChildItem -Path "$Env:ProgramData\Microsoft\Windows\Start Menu\Programs" -Include "*.lnk" -Recurse | Select-Object FullName
+Set-Content -Path "$Env:TEMP\StartSnapshot.json" -Value ($StartSnapshot.FullName | ConvertTo-Json) -Force
+
 Write-Host 'Registering Cleanup & Shutdown...'
 Set-CleanupAndShutdown -ScriptPath "$CSMountPath\sandbox-cleanup.ps1"
 
@@ -52,15 +56,6 @@ Invoke-ExecuteTaskList -TaskList $PreConfigTasks -Type "Pre-Configuration Tasks"
 Write-Host 'Running Configuration Tasks...'
 
 Invoke-ExecuteTaskList -TaskList $ConfigTasks -Type "Configuration Tasks"
-
-#Configure Taskbar Items
-Write-Host 'Setting Taskbar...'
-$TaskbarLayoutRegPath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Explorer"
-if (-not (Test-Path $TaskbarLayoutRegPath)) {
-    New-Item -Path $TaskbarLayoutRegPath -Force | Out-Null
-}
-Set-ItemProperty -Path $TaskbarLayoutRegPath -Name "StartLayoutFile" -Value "$CSMountPath\Assets\TaskbarLayout.xml" -Type ExpandString
-Set-ItemProperty -Path $TaskbarLayoutRegPath -Name "LockedStartLayout" -Value 1 -Type DWord
 
 Write-Host 'Setting Final Wallpaper...'
 Update-WallPaper -Path "$CSMountPath\Wallpaper.jpg"

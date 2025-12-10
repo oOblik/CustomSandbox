@@ -1,0 +1,6 @@
+{
+    "id": "pin-apps-to-taskbar",
+    "name": "[Post Config] Pin Apps to Taskbar",
+    "type": "postconfig",
+    "script": "PostConfig-Pin-Apps-to-Taskbar.ps1"
+}
