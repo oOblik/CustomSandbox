@@ -1,0 +1,9 @@
+{
+    "id": "cloudflaredns",
+    "name": "[Windows Settings] Set Cloudflare DNS",
+    "type": "preconfig",
+    "script": "PreConfig-Set-DNSServers.ps1",
+    "vars": {
+        "addresses": ["1.1.1.1", "1.0.0.1"]
+    }
+}

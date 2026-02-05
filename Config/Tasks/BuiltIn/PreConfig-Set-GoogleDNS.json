@@ -1,0 +1,9 @@
+{
+    "id": "googledns",
+    "name": "[Windows Settings] Set Google DNS",
+    "type": "preconfig",
+    "script": "PreConfig-Set-DNSServers.ps1",
+    "vars": {
+        "addresses": ["8.8.8.8", "8.8.4.4"]
+    }
+}
