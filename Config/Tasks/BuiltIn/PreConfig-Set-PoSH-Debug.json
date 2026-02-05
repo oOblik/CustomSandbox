@@ -1,0 +1,6 @@
+{
+    "id": "posh-set-debug",
+    "name": "[PowerShell Settings] Enable Debug Messages",
+    "type": "preconfig",
+    "script": "PreConfig-Set-PoSH-Debug.ps1"
+}
