@@ -1,0 +1,12 @@
+{
+    "id": "sysinternals-autoruns",
+    "name": "[Install] Sysinternals Autoruns",
+    "type": "config",
+    "script": "Install-Sysinternals-Tool.ps1",
+    "vars": {
+        "ToolName": "Autoruns",
+        "ToolExe": "Autoruns64.exe",
+        "ToolArchive": "Autoruns.zip",
+        "InstallFolder": "Autoruns"
+    }
+}

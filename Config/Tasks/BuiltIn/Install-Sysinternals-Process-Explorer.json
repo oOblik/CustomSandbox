@@ -1,0 +1,12 @@
+{
+    "id": "sysinternals-process-explorer",
+    "name": "[Install] Sysinternals Process Explorer",
+    "type": "config",
+    "script": "Install-Sysinternals-Tool.ps1",
+    "vars": {
+        "ToolName": "Process Explorer",
+        "ToolExe": "procexp64.exe",
+        "ToolArchive": "ProcessExplorer.zip",
+        "InstallFolder": "ProcessExplorer"
+    }
+}

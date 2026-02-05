@@ -1,0 +1,12 @@
+{
+    "id": "sysinternals-process-monitor",
+    "name": "[Install] Sysinternals Process Monitor",
+    "type": "config",
+    "script": "Install-Sysinternals-Tool.ps1",
+    "vars": {
+        "ToolName": "Process Monitor",
+        "ToolExe": "Procmon64.exe",
+        "ToolArchive": "ProcessMonitor.zip",
+        "InstallFolder": "ProcessMonitor"
+    }
+}
